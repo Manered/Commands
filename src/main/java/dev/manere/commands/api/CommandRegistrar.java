@@ -7,10 +7,7 @@ import dev.manere.commands.ctx.CommandContext;
 import dev.manere.commands.ctx.CommandSource;
 import dev.manere.commands.exception.ArgumentParseException;
 import dev.manere.commands.exception.IgnorableCommandException;
-import dev.manere.commands.handler.CommandRequirement;
-import dev.manere.commands.handler.RequirementResult;
-import dev.manere.commands.handler.Suggestion;
-import dev.manere.commands.handler.SuggestionHandler;
+import dev.manere.commands.handler.*;
 import dev.manere.commands.info.CommandData;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -21,6 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,11 +43,59 @@ public class CommandRegistrar implements Listener {
         return new Command(root.literal()) {
             @NotNull
             @Override
-            public List<String> tabComplete(final @NotNull CommandSender sender, final @NotNull String alias, final @NotNull String[] args) throws IllegalArgumentException {
+            public List<String> tabComplete(final @NotNull CommandSender sender, final @NotNull String alias, final @NotNull String[] args) throws IllegalArgumentException, NoSuchMethodException {
                 final CommandNode node = node(root, new ArrayList<>(Arrays.asList(args)));
                 final CommandContext context = new CommandContext(CommandSource.source(sender), node, node.literal(), alias, new ArrayList<>(Arrays.asList(args)));
 
-                /*
+                List<String> suggestions = new ArrayList<>();
+                CommandArguments arguments = context.arguments();
+                CommandArgument<?> currentArgument = arguments.current();
+
+                if (currentArgument != null) {
+                    SuggestionHandler<?> handler = null;
+
+                    if (currentArgument.argument().isNestmateOf(SuggestionHandler.class)) try {
+                        handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    if (handler instanceof SyncSuggestionHandler syncHandler) {
+                        return new ArrayList<>();
+                    }
+
+
+
+                    if (handler != null) {
+                        List<Suggestion> rawSuggestions = ((SuggestionHandler<List<Suggestion>>) handler).suggestions(context);
+                        for (Suggestion suggestion : rawSuggestions) {
+                            suggestions.add(suggestion.suggestion());
+                        }
+                    }
+                } else {
+                    for (CommandNode subcommand : node.subcommands()) {
+                        suggestions.add(subcommand.literal());
+                    }
+                }
+
+                // Filter suggestions based on the current argument input
+                String lastWord = args.length > 0 ? args[args.length - 1].toLowerCase() : "";
+                List<String> matching = new ArrayList<>();
+                for (String suggestion : suggestions) {
+                    if (suggestion.toLowerCase().startsWith(lastWord)) {
+                        matching.add(suggestion);
+                    }
+                }
+
+                return matching;
+
+                // The new version should look like this:
+                // For every subcommand you need to have a dynamic suggestion (not sticky) that uses .startsWith() aswell in completions to help with completions.
+                // An Argument<?> can implement SuggestionHandler which provides automatic suggestions
+                // A CommandArgument<? extends Argument<?>> has suggestions.
+
+                /* PREVIOUS VERSION
+
                 final SuggestionHandler<?> unknown = node.suggestions();
 
                 try {
@@ -89,6 +135,10 @@ public class CommandRegistrar implements Listener {
                 } catch (final ClassCastException ignored) {}
 
                     */
+
+                if (context.arguments().current() == null) {
+                    return
+                }
 
                 return new ArrayList<>();
             }
