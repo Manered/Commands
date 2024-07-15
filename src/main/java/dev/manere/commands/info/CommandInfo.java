@@ -2,43 +2,49 @@ package dev.manere.commands.info;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+/**
+ * Contains metadata about a command, such as description, permission, and aliases.
+ */
 public class CommandInfo {
     private String description = null;
     private String permission = null;
-
     private Component permissionMessage = null;
-
     private final Set<String> aliases = new HashSet<>();
 
+    /**
+     * Creates a new CommandInfo object.
+     *
+     * @return a new CommandInfo object.
+     */
     @NotNull
     public static CommandInfo info() {
         return new CommandInfo();
     }
 
-    @NotNull
-    public static CommandInfo info(final @Nullable String description, final @Nullable String permission, final @Nullable Component permissionMessage, final @Nullable String @Nullable ... aliases) {
-        final CommandInfo info = info();
-
-        if (description != null) info.description(description);
-        if (permission != null) info.permission(permission);
-        if (permissionMessage != null) info.permissionMessage(permissionMessage);
-
-        info.aliases(aliases);
-
-        return info;
-    }
-
+    /**
+     * Gets the description of the command.
+     *
+     * @return the description of the command, or null if not set.
+     */
     @Nullable
     public String description() {
         return description;
     }
 
+    /**
+     * Sets the description of the command.
+     *
+     * @param description the description to set.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo description(final @NotNull String description) {
@@ -46,11 +52,22 @@ public class CommandInfo {
         return this;
     }
 
+    /**
+     * Gets the permission required to execute the command.
+     *
+     * @return the permission required, or null if not set.
+     */
     @Nullable
     public String permission() {
         return permission;
     }
 
+    /**
+     * Sets the permission required to execute the command.
+     *
+     * @param permission the permission to set.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo permission(final @NotNull String permission) {
@@ -58,22 +75,45 @@ public class CommandInfo {
         return this;
     }
 
+    /**
+     * Sets the permission required and the permission message to be shown if permission is denied.
+     *
+     * @param permission the permission to set.
+     * @param message    the message to be shown if permission is denied.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo permission(final @NotNull String permission, final @NotNull Component message) {
         return permission(permission).permissionMessage(message);
     }
 
+    /**
+     * Gets the permission message to be shown if permission is denied.
+     *
+     * @return the permission message, or null if not set.
+     */
     @Nullable
     public Component permissionMessage() {
         return permissionMessage;
     }
 
+    /**
+     * Gets the aliases of the command.
+     *
+     * @return the aliases of the command.
+     */
     @NotNull
     public Set<String> aliases() {
         return aliases;
     }
 
+    /**
+     * Sets the aliases of the command.
+     *
+     * @param aliases the aliases to set.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo aliases(final @Nullable Collection<String> aliases) {
@@ -82,20 +122,38 @@ public class CommandInfo {
         return this;
     }
 
+    /**
+     * Sets the aliases of the command.
+     *
+     * @param aliases the aliases to set.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
-    public CommandInfo aliases(final @NotNull String @Nullable... aliases) {
+    public CommandInfo aliases(final @NotNull String @Nullable ... aliases) {
         this.aliases.clear();
         if (aliases != null) this.aliases.addAll(Arrays.asList(aliases));
         return this;
     }
 
+    /**
+     * Adds an alias to the command.
+     *
+     * @param alias the alias to add.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo addAlias(final @NotNull String alias) {
         return addAliases(alias);
     }
 
+    /**
+     * Adds multiple aliases to the command.
+     *
+     * @param aliases the aliases to add.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo addAliases(final @NotNull String @NotNull ... aliases) {
@@ -104,6 +162,12 @@ public class CommandInfo {
         return this;
     }
 
+    /**
+     * Sets the permission message to be shown if permission is denied.
+     *
+     * @param permissionMessage the permission message to set.
+     * @return this CommandInfo object.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo permissionMessage(final @NotNull Component permissionMessage) {

@@ -1,8 +1,8 @@
 package dev.manere.commands.api;
 
+import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
-import dev.manere.commands.ctx.CommandArguments;
 import dev.manere.commands.ctx.CommandContext;
 import dev.manere.commands.ctx.CommandSource;
 import dev.manere.commands.exception.ArgumentParseException;
@@ -13,17 +13,21 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public class CommandRegistrar implements Listener {
     public static void register(final @NotNull CommandData data) {
         final JavaPlugin plugin = data.api().plugin();
@@ -36,6 +40,8 @@ public class CommandRegistrar implements Listener {
             plugin.getName().toLowerCase(Locale.ROOT).replaceAll(" ", "_"),
             command(root)
         );
+
+        data.registered(true);
     }
 
     @NotNull
@@ -43,104 +49,62 @@ public class CommandRegistrar implements Listener {
         return new Command(root.literal()) {
             @NotNull
             @Override
-            public List<String> tabComplete(final @NotNull CommandSender sender, final @NotNull String alias, final @NotNull String[] args) throws IllegalArgumentException, NoSuchMethodException {
+            public List<String> tabComplete(final @NotNull CommandSender sender, final @NotNull String alias, final @NotNull String[] args) throws IllegalArgumentException {
+                final List<String> completions = new ArrayList<>();
                 final CommandNode node = node(root, new ArrayList<>(Arrays.asList(args)));
                 final CommandContext context = new CommandContext(CommandSource.source(sender), node, node.literal(), alias, new ArrayList<>(Arrays.asList(args)));
 
-                List<String> suggestions = new ArrayList<>();
-                CommandArguments arguments = context.arguments();
-                CommandArgument<?> currentArgument = arguments.current();
+                // Handle subcommands
+                final List<CommandNode> subcommands = node.subcommands();
+                if (!subcommands.isEmpty() && args.length > 0) {
+                    final String lastArg = args[args.length - 1];
+
+                    for (final CommandNode subcommand : subcommands) if (subcommand.literal().startsWith(lastArg)) completions.add(subcommand.literal());
+                    if (!completions.isEmpty()) return completions;
+                }
+
+                // Handle arguments
+                CommandArgument<?> currentArgument = null;
+
+                if (!context.command().arguments().isEmpty() && args.length > context.command().argumentOffset()) {
+                    int index = (args.length - 1) - context.command().argumentOffset();
+                    if (index >= 0 && index < context.command().arguments().size()) {
+                        currentArgument = context.command().arguments().get(index);
+                    }
+                }
 
                 if (currentArgument != null) {
                     SuggestionHandler<?> handler = null;
 
-                    if (currentArgument.argument().isNestmateOf(SuggestionHandler.class)) try {
-                        handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
-                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
+                    if (SuggestionHandler.class.isAssignableFrom(currentArgument.argument())) {
+                        try {
+                            handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
+                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                                 NoSuchMethodException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
 
                     if (handler instanceof SyncSuggestionHandler syncHandler) {
-                        return new ArrayList<>();
-                    }
+                        final List<Suggestion> suggestions = currentArgument.suggestions() instanceof SyncSuggestionHandler
+                            ? ((SyncSuggestionHandler) currentArgument.suggestions()).suggestions(context)
+                            : syncHandler.suggestions(context);
 
-
-
-                    if (handler != null) {
-                        List<Suggestion> rawSuggestions = ((SuggestionHandler<List<Suggestion>>) handler).suggestions(context);
-                        for (Suggestion suggestion : rawSuggestions) {
-                            suggestions.add(suggestion.suggestion());
-                        }
-                    }
-                } else {
-                    for (CommandNode subcommand : node.subcommands()) {
-                        suggestions.add(subcommand.literal());
-                    }
-                }
-
-                // Filter suggestions based on the current argument input
-                String lastWord = args.length > 0 ? args[args.length - 1].toLowerCase() : "";
-                List<String> matching = new ArrayList<>();
-                for (String suggestion : suggestions) {
-                    if (suggestion.toLowerCase().startsWith(lastWord)) {
-                        matching.add(suggestion);
-                    }
-                }
-
-                return matching;
-
-                // The new version should look like this:
-                // For every subcommand you need to have a dynamic suggestion (not sticky) that uses .startsWith() aswell in completions to help with completions.
-                // An Argument<?> can implement SuggestionHandler which provides automatic suggestions
-                // A CommandArgument<? extends Argument<?>> has suggestions.
-
-                /* PREVIOUS VERSION
-
-                final SuggestionHandler<?> unknown = node.suggestions();
-
-                try {
-                    final SuggestionHandler<List<Suggestion>> handler = (SuggestionHandler<List<Suggestion>>) unknown;
-                    final List<Suggestion> suggestions = handler.suggestions(context);
-
-                    final List<String> all = new ArrayList<>();
-
-                    for (final Suggestion suggestion : suggestions) {
-                        // if (suggestion.tooltip() != null) throw new UnsupportedOperationException("Only async suggestions can have tooltips! (" + node + ")");
-                        all.add(suggestion.suggestion());
-                    }
-
-                    final List<String> matching = new ArrayList<>();
-
-                    final CommandArguments arguments = context.arguments();
-                    final CommandArgument<?> argument = arguments.current();
-
-                    @Nullable
-                    Integer currentArgument;
-                    if (argument != null) currentArgument = arguments.position(argument);
-                    else currentArgument = null;
-
-                    for (final String suggestion : all) {
-                        if (currentArgument != null) {
-                            if (suggestion.toLowerCase().startsWith(node.argumentOffset() + args[currentArgument].toLowerCase())) {
-                                matching.add(suggestion);
+                        final String lastArg = args.length > 0 ? args[args.length - 1] : "";
+                        for (final Suggestion suggestion : suggestions) {
+                            if (!suggestion.sticky() && suggestion.suggestion().toLowerCase().startsWith(lastArg.toLowerCase())) {
+                                completions.add(suggestion.suggestion());
+                                continue;
                             }
-                        } else {
-                            if (suggestion.toLowerCase().startsWith(node.argumentOffset() + args[Math.max(args.length - 1, 0)])) {
-                                matching.add(suggestion);
+
+                            if (suggestion.sticky()) {
+                                completions.add(suggestion.suggestion());
                             }
                         }
                     }
-
-                    return matching;
-                } catch (final ClassCastException ignored) {}
-
-                    */
-
-                if (context.arguments().current() == null) {
-                    return
                 }
 
-                return new ArrayList<>();
+                return completions;
             }
 
             @Override
@@ -174,16 +138,93 @@ public class CommandRegistrar implements Listener {
         for (final String arg : args) {
             boolean found = false;
 
-            for (CommandNode subcommand : currentNode.subcommands()) if (subcommand.literal().equals(arg)) {
-                lastValidNode = subcommand;
-                currentNode = subcommand;
-                found = true;
-                break;
-            }
+            for (CommandNode subcommand : currentNode.subcommands())
+                if (subcommand.literal().equals(arg)) {
+                    lastValidNode = subcommand;
+                    currentNode = subcommand;
+                    found = true;
+                    break;
+                }
 
             if (!found) break;
         }
 
         return lastValidNode;
+    }
+
+    @NotNull
+    public AsyncTabCompleteEvent.Completion convert(final @NotNull Suggestion suggestion) {
+        return AsyncTabCompleteEvent.Completion.completion(suggestion.suggestion(), suggestion.tooltip());
+    }
+
+    @EventHandler
+    public void handle(final @NotNull AsyncTabCompleteEvent event) {
+        final CommandSource source = CommandSource.source(event.getSender());
+        final String buffer = event.getBuffer();
+
+        if (!event.isCommand() || !buffer.startsWith("/") || buffer.indexOf(' ') == -1) return;
+
+        String[] rawArgs = Pattern.compile(" ").split(buffer, -1);
+        rawArgs = rawArgs.length > 1 ? Arrays.copyOfRange(rawArgs, 1, rawArgs.length) : new String[]{""};
+
+        String alias = rawArgs[0];
+        if (alias.startsWith("/")) alias = alias.substring(1);
+
+        final CommandNode root = APIHolder.api().manager().find(buffer.split(" ")[0].replaceFirst("/", ""));
+        if (root == null) return;
+
+        final List<String> args = new ArrayList<>(Arrays.asList(rawArgs));
+
+        final List<AsyncTabCompleteEvent.Completion> completions = new ArrayList<>();
+        final CommandNode node = node(root, args);
+        final CommandContext context = new CommandContext(source, node, node.literal(), alias, args);
+
+        CommandArgument<?> currentArgument = null;
+
+        if (!context.command().arguments().isEmpty() && args.size() > context.command().argumentOffset()) {
+            int index = (args.size() - 1) - context.command().argumentOffset();
+            if (index >= 0 && index < context.command().arguments().size()) {
+                currentArgument = context.command().arguments().get(index);
+            }
+        }
+
+        if (currentArgument != null) {
+            SuggestionHandler<?> handler = null;
+
+            if (SuggestionHandler.class.isAssignableFrom(currentArgument.argument())) {
+                try {
+                    handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                         NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (handler instanceof AsyncSuggestionHandler asyncHandler) {
+                final CompletableFuture<List<Suggestion>> suggestions = currentArgument.suggestions() instanceof AsyncSuggestionHandler
+                    ? ((AsyncSuggestionHandler) currentArgument.suggestions()).suggestions(context)
+                    : asyncHandler.suggestions(context);
+
+                final String lastArg = !args.isEmpty() ? args.get(args.size() - 1) : "";
+
+                List<AsyncTabCompleteEvent.Completion> newCompletions = new ArrayList<>();
+
+                final List<Suggestion> suggestionsJoin = new ArrayList<>(suggestions.join());
+
+                for (final Suggestion suggestion : suggestionsJoin) {
+                    if (!suggestion.sticky() && suggestion.suggestion().toLowerCase().startsWith(lastArg.toLowerCase())) {
+                        newCompletions.add(convert(suggestion));
+                        continue;
+                    }
+
+                    if (suggestion.sticky()) {
+                        newCompletions.add(convert(suggestion));
+                    }
+                }
+
+                completions.addAll(newCompletions);
+                event.completions(completions);
+            }
+        }
     }
 }

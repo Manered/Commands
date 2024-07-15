@@ -2,11 +2,15 @@ package dev.manere.commands.ctx;
 
 import com.google.common.collect.ImmutableList;
 import dev.manere.commands.CommandNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the context in which a command is executed.
+ */
 public class CommandContext {
     private final CommandSource source;
     private final CommandNode command;
@@ -15,50 +19,93 @@ public class CommandContext {
     private final String rootAlias;
     private final List<String> argumentsList;
 
+    /**
+     * Constructs a CommandContext with the specified parameters.
+     *
+     * @param source      the source of the command.
+     * @param command     the command node.
+     * @param alias       the alias of the command.
+     * @param rootAlias   the root alias of the command.
+     * @param arguments   the list of arguments.
+     */
     public CommandContext(final @NotNull CommandSource source, final @NotNull CommandNode command, final @NotNull String alias, final @NotNull String rootAlias, final @NotNull List<String> arguments) {
         this.source = source;
         this.command = command;
         this.alias = alias;
         this.arguments = new CommandArguments(this);
         this.argumentsList = new ArrayList<>(arguments);
-
-        /* This is not offset */
         this.rootAlias = rootAlias;
     }
 
+    /**
+     * Gets the source of the command.
+     *
+     * @return the source of the command.
+     */
     @NotNull
     public CommandSource source() {
         return source;
     }
 
+    /**
+     * Gets the command node.
+     *
+     * @return the command node.
+     */
     @NotNull
     public CommandNode command() {
         return command;
     }
 
+    /**
+     * Gets the alias of the command.
+     *
+     * @return the alias of the command.
+     */
     @NotNull
     public String alias() {
         return alias;
     }
 
+    /**
+     * Gets the arguments of the command.
+     *
+     * @return the command arguments.
+     */
     @NotNull
     public CommandArguments arguments() {
         return arguments;
     }
 
+    /**
+     * Gets the root alias of the command.
+     *
+     * @return the root alias of the command.
+     */
     @NotNull
     public String rootAlias() {
         return rootAlias;
     }
 
+    /**
+     * Gets the raw list of arguments.
+     *
+     * @return the raw list of arguments.
+     */
     @NotNull
     private List<String> rawArguments() {
         return argumentsList;
     }
 
+    /**
+     * Gets the list of arguments starting from the offset.
+     *
+     * @return the list of arguments from the offset.
+     */
     @NotNull
-    List<String> argumentsFromOffset() {
-        final List<String> rawArgumentsCopy = ImmutableList.sortedCopyOf(rawArguments());
+    @ApiStatus.Internal
+    public List<String> argumentsFromOffset() {
+        final List<String> rawArgumentsCopy = ImmutableList.copyOf(rawArguments());
         final int offset = command.argumentOffset();
 
         // Ensure the offset is within the bounds of the list

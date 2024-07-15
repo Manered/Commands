@@ -1,9 +1,9 @@
 package dev.manere.commands.handler;
 
-import dev.manere.commands.ctx.CommandContext;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Handles asynchronous suggestions for command arguments.
+ */
 public interface AsyncSuggestionHandler extends SuggestionHandler<CompletableFuture<List<Suggestion>>> { }

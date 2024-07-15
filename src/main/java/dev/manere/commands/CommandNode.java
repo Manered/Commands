@@ -4,24 +4,25 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.handler.ExecutionHandler;
 import dev.manere.commands.handler.CommandRequirement;
-import dev.manere.commands.handler.Suggestion;
-import dev.manere.commands.handler.SuggestionHandler;
 import dev.manere.commands.info.CommandInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * Represents a command node in a command structure, holding its literal,
+ * execution handler, subcommands, and requirements.
+ */
 public class CommandNode {
     private final String literal;
     private final CommandInfo info;
 
     private ExecutionHandler execution = ctx -> {};
 
-    private final Set<CommandNode> subcommands = new HashSet<>();
+    private final List<CommandNode> subcommands = new ArrayList<>();
     private final Set<CommandRequirement> requirements = new HashSet<>();
 
     @Nullable
@@ -34,21 +35,45 @@ public class CommandNode {
         this.info = info;
     }
 
+    /**
+     * Creates a CommandNode with the specified literal and default CommandInfo.
+     *
+     * @param literal the command literal.
+     * @return a new CommandNode instance.
+     */
     @NotNull
     public static CommandNode literal(final @NotNull String literal) {
         return of(literal, CommandInfo.info());
     }
 
+    /**
+     * Creates a CommandNode with the specified literal and CommandInfo.
+     *
+     * @param literal the command literal.
+     * @param info    the command info.
+     * @return a new CommandNode instance.
+     */
     @NotNull
     public static CommandNode of(final @NotNull String literal, final @NotNull CommandInfo info) {
         return new CommandNode(literal, info);
     }
 
+    /**
+     * Creates a new Builder for constructing a CommandNode.
+     *
+     * @return a new Builder instance.
+     */
     @NotNull
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Creates a new Builder and applies a consumer to it.
+     *
+     * @param consumer a consumer to configure the builder.
+     * @return a new CommandNode instance configured by the consumer.
+     */
     @NotNull
     public static Builder builder(final @NotNull Consumer<Builder> consumer) {
         final Builder builder = builder();
@@ -57,7 +82,7 @@ public class CommandNode {
     }
 
     @NotNull
-    public Set<CommandNode> subcommands() {
+    public List<CommandNode> subcommands() {
         return subcommands;
     }
 
@@ -76,6 +101,12 @@ public class CommandNode {
         return info;
     }
 
+    /**
+     * Adds a command requirement to this node.
+     *
+     * @param requirement the command requirement to add.
+     * @return this CommandNode instance.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode require(final @NotNull CommandRequirement requirement) {
@@ -83,6 +114,12 @@ public class CommandNode {
         return this;
     }
 
+    /**
+     * Adds a command argument to this node.
+     *
+     * @param argument the command argument to add.
+     * @return this CommandNode instance.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode argument(final @NotNull CommandArgument<?> argument) {
@@ -90,6 +127,12 @@ public class CommandNode {
         return this;
     }
 
+    /**
+     * Adds a subcommand to this command node.
+     *
+     * @param subcommand the subcommand to add.
+     * @return this CommandNode instance.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode subcommand(final @NotNull CommandNode subcommand) {
@@ -98,12 +141,19 @@ public class CommandNode {
         return this;
     }
 
+    /**
+     * Sets the execution handler for this command node.
+     *
+     * @param execution the execution handler to set.
+     * @return this CommandNode instance.
+     */
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode handler(final @NotNull ExecutionHandler execution) {
         this.execution = execution;
         return this;
     }
+
     @NotNull
     public ExecutionHandler execution() {
         return execution;
@@ -121,6 +171,37 @@ public class CommandNode {
         return this;
     }
 
+    /**
+     * Retrieves all nodes at the specified position in the command hierarchy.
+     *
+     * @param position the position in the command hierarchy.
+     * @return a list of command nodes at the specified position.
+     */
+    @NotNull
+    public List<CommandNode> nodesAtPosition(final int position) {
+        if (position < 0) {
+            if (position == -1) return Collections.singletonList(this.root());
+            else throw new IllegalArgumentException("Position must be non-negative or -1 for root.");
+        }
+        return nodesAtPosition(root(), position);
+    }
+
+    @NotNull
+    private List<CommandNode> nodesAtPosition(final @NotNull CommandNode node, final int position) {
+        if (position == 0) return new ArrayList<>(node.subcommands());
+
+        final List<CommandNode> result = new ArrayList<>();
+        for (CommandNode subcommand : node.subcommands()) {
+            result.addAll(nodesAtPosition(subcommand, position - 1));
+        }
+        return result;
+    }
+
+    /**
+     * Retrieves the root command node of this command node.
+     *
+     * @return the root CommandNode.
+     */
     @NotNull
     public CommandNode root() {
         CommandNode current = this;
@@ -128,6 +209,11 @@ public class CommandNode {
         return current;
     }
 
+    /**
+     * Calculates the argument offset based on the parent nodes.
+     *
+     * @return the number of parent nodes.
+     */
     public int argumentOffset() {
         if (parent == null) return 0;
 
@@ -136,7 +222,7 @@ public class CommandNode {
 
         while (current.parent != null) {
             current = current.parent;
-            offset += current.arguments.size();
+            offset++;
         }
 
         return offset;
@@ -147,10 +233,14 @@ public class CommandNode {
         return requirements;
     }
 
+    /**
+     * Retrieves all subcommands within this command node and its children.
+     *
+     * @return a list of all subcommands.
+     */
     @NotNull
     public List<CommandNode> allSubcommands() {
         final List<CommandNode> allSubcommands = new ArrayList<>();
-
         collectSubcommands(this.root(), allSubcommands);
         return allSubcommands;
     }
@@ -169,6 +259,9 @@ public class CommandNode {
         return "Node of literal " + literal + " with root being " + root().literal;
     }
 
+    /**
+     * Builder for constructing a CommandNode.
+     */
     public static class Builder {
         private String literal = null;
         private CommandInfo info = CommandInfo.info();
@@ -180,6 +273,12 @@ public class CommandNode {
             return literal;
         }
 
+        /**
+         * Sets the literal for this command node.
+         *
+         * @param literal the command literal to set.
+         * @return this Builder instance.
+         */
         @NotNull
         @CanIgnoreReturnValue
         public Builder literal(final @NotNull String literal) {
@@ -187,12 +286,23 @@ public class CommandNode {
             return this;
         }
 
+        /**
+         * Gets the command info for this builder.
+         *
+         * @return the command info.
+         */
         @NotNull
         public CommandInfo info() {
             if (info == null) this.info = CommandInfo.info();
             return info;
         }
 
+        /**
+         * Sets the command info for this builder.
+         *
+         * @param info the command info to set.
+         * @return this Builder instance.
+         */
         @NotNull
         @CanIgnoreReturnValue
         public Builder info(final @NotNull CommandInfo info) {
@@ -200,6 +310,12 @@ public class CommandNode {
             return this;
         }
 
+        /**
+         * Sets the command info using a supplier.
+         *
+         * @param supplier the supplier for command info.
+         * @return this Builder instance.
+         */
         @NotNull
         @CanIgnoreReturnValue
         public Builder info(final @NotNull Supplier<CommandInfo> supplier) {
@@ -207,6 +323,12 @@ public class CommandNode {
             return this;
         }
 
+        /**
+         * Configures the command info using a consumer.
+         *
+         * @param consumer the consumer to configure the command info.
+         * @return this Builder instance.
+         */
         @NotNull
         @CanIgnoreReturnValue
         public Builder info(final @NotNull Consumer<CommandInfo> consumer) {
@@ -215,6 +337,11 @@ public class CommandNode {
             return this;
         }
 
+        /**
+         * Builds and returns a new CommandNode instance.
+         *
+         * @return a new CommandNode instance.
+         */
         @NotNull
         public CommandNode build() {
             return CommandNode.of(literal, info);

@@ -1,8 +1,8 @@
 package dev.manere.commands.ctx;
 
 import dev.manere.commands.CommandNode;
-import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.CommandArgument;
+import dev.manere.commands.argument.ListArgument;
 import dev.manere.commands.exception.ArgumentParseException;
 import dev.manere.commands.exception.IgnorableCommandException;
 import org.jetbrains.annotations.NotNull;
@@ -11,31 +11,56 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
+/**
+ * Represents the arguments of a command in a specific context.
+ */
 public class CommandArguments {
     private final CommandContext context;
 
+    /**
+     * Constructs a CommandArguments instance with the given context.
+     *
+     * @param context the command context.
+     */
     CommandArguments(final @NotNull CommandContext context) {
         this.context = context;
     }
 
+    /**
+     * Retrieves the CommandArgument at the specified position.
+     *
+     * @param position the position of the argument.
+     * @return the CommandArgument at the specified position, or null if not found.
+     */
     @Nullable
-    private CommandArgument<?> argument(final int position) {
-        return position >= 0 && position < context.command().arguments().size() ? context.command().arguments().get(position) : null;
+    private CommandArgument<?> named(final int position) {
+        CommandArgument<?> arg;
+        if (position >= 0 && position < context.command().arguments().size()) {
+            arg = context.command().arguments().get(position);
+        } else {
+            arg = null;
+        }
+
+        return arg;
     }
 
-    private int size() {
-        return context.argumentsFromOffset().size();
-    }
-
-    public int position() {
-        return Math.max(size() - 1, 0);
-    }
-
+    /**
+     * Retrieves the current CommandArgument based on the current position.
+     *
+     * @return the current CommandArgument, or null if not found.
+     */
     @Nullable
     public CommandArgument<?> current() {
-        return argument(position());
+        int currentPosition = context.argumentsFromOffset().size();
+        return named(currentPosition);
     }
 
+    /**
+     * Retrieves the position of the specified CommandArgument.
+     *
+     * @param argument the CommandArgument to find.
+     * @return the position of the argument, or null if not found.
+     */
     @Nullable
     public Integer position(final @NotNull CommandArgument<?> argument) {
         final CommandNode node = context.command();
@@ -48,24 +73,45 @@ public class CommandArguments {
         return null;
     }
 
+    /**
+     * Retrieves the CommandArgument with the specified name.
+     *
+     * @param name the name of the argument.
+     * @return the CommandArgument with the specified name, or null if not found.
+     */
     @Nullable
-    public CommandArgument<?> argument(final @NotNull String name) {
-        for (final CommandArgument<?> argument : context.command().arguments()) {
-            if (argument.name().equals(name)) return argument;
-        }
+    public CommandArgument<?> named(final @NotNull String name) {
+        for (final CommandArgument<?> argument : context.command().arguments()) if (argument.name().equals(name)) return argument;
         return null;
     }
 
+    /**
+     * Retrieves the argument of the specified type and name.
+     *
+     * @param type the class of the argument type.
+     * @param name the name of the argument.
+     * @param <T>  the type of the argument.
+     * @return the argument of the specified type and name, or null if not found.
+     */
     @Nullable
     public <T> T argument(final @NotNull Class<T> type, final @NotNull String name) {
-        final CommandArgument<?> argument = argument(name);
+        final CommandArgument<?> argument = named(name);
         if (argument == null) return null;
 
-        final int commandPosition = position();
-        if (commandPosition >= context.argumentsFromOffset().size()) return null;
+        final Integer argumentPosition = position(argument);
+        if (argumentPosition == null || argumentPosition >= context.argumentsFromOffset().size()) return null;
+
+        if (ListArgument.class.isAssignableFrom(argument.argument())) {
+            try {
+                final ListArgument<?> listArgument = (ListArgument<?>) argument.argument().getDeclaredConstructor().newInstance();
+                return type.cast(listArgument.parse(context, argumentPosition));
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         try {
-            return type.cast(argument.argument().getDeclaredConstructor().newInstance().parse(context, context.argumentsFromOffset().get(commandPosition)));
+            return type.cast(argument.argument().getDeclaredConstructor().newInstance().parse(context, context.argumentsFromOffset().get(argumentPosition)));
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         } catch (ArgumentParseException e) {
@@ -73,6 +119,26 @@ public class CommandArguments {
         }
     }
 
+    /**
+     * Retrieves the argument with the specified name.
+     *
+     * @param name the name of the argument.
+     * @return the argument with the specified name, or null if not found.
+     */
+    @Nullable
+    public Object argument(final @NotNull String name) {
+        return argument(Object.class, name);
+    }
+
+    /**
+     * Retrieves the argument of the specified type and name, or returns a default value if not found.
+     *
+     * @param type the class of the argument type.
+     * @param name the name of the argument.
+     * @param or   the supplier of the default value.
+     * @param <T>  the type of the argument.
+     * @return the argument of the specified type and name, or the default value if not found.
+     */
     @NotNull
     public <T> T argumentOr(final @NotNull Class<T> type, final @NotNull String name, final @NotNull Supplier<@Nullable T> or) {
         final T argument = argument(type, name);
@@ -88,5 +154,31 @@ public class CommandArguments {
         }
 
         return argument;
+    }
+
+    /**
+     * Retrieves the argument with the specified name, or returns a default value if not found.
+     *
+     * @param name the name of the argument.
+     * @param or   the supplier of the default value.
+     * @param <T>  the type of the argument.
+     * @return the argument with the specified name, or the default value if not found.
+     */
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public <T> T argumentOr(final @NotNull String name, final @NotNull Supplier<@Nullable T> or) {
+        final Object argument = argument(name);
+
+        if (argument == null) {
+            final T orGet = or.get();
+
+            if (orGet == null) {
+                throw new IgnorableCommandException();
+            } else {
+                return orGet;
+            }
+        }
+
+        return (T) argument;
     }
 }
