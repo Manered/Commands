@@ -3,5 +3,5 @@ jdk:
 before-install:
   - sdk install java 21.0.4-graal
   - sdk use java 21.0.4-graal
-  - sdk install gradle 8.5
-  - sdk use gradle 8.5
+  - sdk install gradle 8.9
+  - sdk use gradle 8.9

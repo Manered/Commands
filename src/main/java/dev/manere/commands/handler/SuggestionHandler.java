@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <S> the type of suggestions.
  */
+@FunctionalInterface
 public interface SuggestionHandler<S> {
     /**
      * Provides suggestions for command arguments based on the given context.

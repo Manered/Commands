@@ -7,12 +7,13 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Utility class for managing different types of arguments.
  */
-public class ArgumentTypes {
+public class ArgumentTypes implements Iterable<Class<? extends Argument<?>>> {
     public static final Class<? extends Argument<?>> DOUBLE = DoubleArgument.class;
     public static final Class<? extends Argument<?>> ENTITY_TYPE = EntityTypeArgument.class;
     public static final Class<? extends Argument<?>> FLOAT = FloatArgument.class;
@@ -21,6 +22,7 @@ public class ArgumentTypes {
     public static final Class<? extends Argument<?>> GREEDY_TEXT = GreedyTextArgument.class;
     public static final Class<? extends Argument<?>> INTEGER = IntegerArgument.class;
     public static final Class<? extends Argument<?>> LONG = LongArgument.class;
+    public static final Class<? extends Argument<?>> MATERIAL = MaterialArgument.class;
     public static final Class<? extends Argument<?>> OFFLINE_PLAYER = OfflinePlayerArgument.class;
     public static final Class<? extends Argument<?>> PLAYER = PlayerArgument.class;
     public static final Class<? extends Argument<?>> STRING = StringArgument.class;
@@ -128,6 +130,11 @@ public class ArgumentTypes {
     }
 
     @NotNull
+    public static Class<? extends Argument<?>> material() {
+        return MATERIAL;
+    }
+
+    @NotNull
     public static Class<? extends Argument<?>> offlinePlayer() {
         return OFFLINE_PLAYER;
     }
@@ -145,5 +152,11 @@ public class ArgumentTypes {
     @NotNull
     public static Class<? extends Argument<?>> text() {
         return TEXT;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Class<? extends Argument<?>>> iterator() {
+        return values().iterator();
     }
 }

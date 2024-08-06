@@ -13,6 +13,7 @@ import java.util.Set;
  *
  * @param <E> the type of elements in the list.
  */
+@FunctionalInterface
 public interface ListArgument<E> extends Argument<List<E>> {
     /**
      * Unsupported operation for ListArgument types.

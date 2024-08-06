@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handles the execution of a command.
  */
+@FunctionalInterface
 public interface ExecutionHandler {
     /**
      * Executes the command in the given context.
