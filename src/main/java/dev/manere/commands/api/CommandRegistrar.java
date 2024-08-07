@@ -9,6 +9,8 @@ import dev.manere.commands.exception.ArgumentParseException;
 import dev.manere.commands.exception.IgnorableCommandException;
 import dev.manere.commands.handler.*;
 import dev.manere.commands.info.CommandData;
+import dev.manere.commands.info.CommandInfo;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -46,13 +48,21 @@ public class CommandRegistrar implements Listener {
 
     @NotNull
     public static Command command(final @NotNull CommandNode root) {
-        return new Command(root.literal()) {
+        final Command command = new Command(root.literal()) {
             @NotNull
             @Override
             public List<String> tabComplete(final @NotNull CommandSender sender, final @NotNull String alias, final @NotNull String[] args) throws IllegalArgumentException {
                 final List<String> completions = new ArrayList<>();
                 final CommandNode node = node(root, new ArrayList<>(Arrays.asList(args)));
+
                 final CommandContext context = new CommandContext(CommandSource.source(sender), node, node.literal(), alias, new ArrayList<>(Arrays.asList(args)));
+
+                final String permission = root.info().permission();
+                if (permission != null && !context.source().sender().hasPermission(permission)) {
+                    final Component permissionMessage = root.info().permissionMessage();
+                    if (permissionMessage != null) context.source().sendMessage(permissionMessage);
+                    return completions;
+                }
 
                 // Handle subcommands
                 final List<CommandNode> subcommands = node.subcommands();
@@ -113,6 +123,16 @@ public class CommandRegistrar implements Listener {
                 return true;
             }
         };
+
+        final CommandInfo info = root.info();
+
+        command.setAliases(new ArrayList<>(info.aliases()));
+        command.setPermission(info.permission());
+
+        final String description = info.description();
+        if (description != null) command.setDescription(description);
+
+        return command;
     }
 
     private static void handle(final @NotNull CommandNode root, final @NotNull CommandSource source, final @NotNull String command, final @NotNull List<String> args) {
@@ -120,6 +140,13 @@ public class CommandRegistrar implements Listener {
         final CommandContext context = new CommandContext(source, node, node.literal(), command, args);
 
         for (final CommandRequirement requirement : node.requirements()) if (requirement.require(context).equals(RequirementResult.failed())) return;
+
+        final String permission = root.info().permission();
+        if (permission != null && !context.source().sender().hasPermission(permission)) {
+            final Component permissionMessage = root.info().permissionMessage();
+            if (permissionMessage != null) context.source().sendMessage(permissionMessage);
+            return;
+        }
 
         try {
             node.execution().run(context);
@@ -205,7 +232,7 @@ public class CommandRegistrar implements Listener {
                     ? ((AsyncSuggestionHandler) currentArgument.suggestions()).suggestions(context)
                     : asyncHandler.suggestions(context);
 
-                final String lastArg = !args.isEmpty() ? args.get(args.size() - 1) : "";
+                final String lastArg = !args.isEmpty() ? args.getLast() : "";
 
                 List<AsyncTabCompleteEvent.Completion> newCompletions = new ArrayList<>();
 

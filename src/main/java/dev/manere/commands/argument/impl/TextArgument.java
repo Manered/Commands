@@ -1,7 +1,6 @@
 package dev.manere.commands.argument.impl;
 
 import dev.manere.commands.argument.Argument;
-import dev.manere.commands.argument.ArgumentTypes;
 import dev.manere.commands.ctx.CommandContext;
 import dev.manere.commands.exception.ArgumentParseException;
 import dev.manere.commands.handler.Suggestion;

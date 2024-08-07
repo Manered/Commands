@@ -7,14 +7,12 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.GameMode;
-import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 public class GameModeArgument implements Argument<GameMode>, SyncSuggestionHandler {
     @NotNull
