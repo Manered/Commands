@@ -82,7 +82,7 @@ public class TestPlugin extends JavaPlugin {
                     final World world = context.arguments().argumentOr(World.class, "world", () -> Objects.requireNonNull(context.source().asPlayer()).getWorld());
 
                     final Component text = context.arguments().argumentOr(Component.class, "text", () -> {
-                        context.source().sendRichMessage("<red>Usage: /<command> global <minimessage text>"
+                        context.source().sendRichMessage("<red>Usage: /<command> world <world> <minimessage text>"
                             .replaceAll("<command>", context.rootAlias())
                         );
                         return null;
