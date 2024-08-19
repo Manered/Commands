@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 /**
  * Represents the API for managing commands.
+ *
+ * @see CommandManager
  */
 public abstract class CommandsAPI {
     private final CommandManager manager;

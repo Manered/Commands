@@ -1,11 +1,18 @@
 package dev.manere.commands.handler;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Represents a suggestion for a command argument.
+ *
+ * @see SuggestionHandler
+ * @see SyncSuggestionHandler
+ * @see AsyncSuggestionHandler
  */
 public class Suggestion {
     @NotNull
@@ -133,5 +140,11 @@ public class Suggestion {
      */
     public boolean sticky() {
         return sticky;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+        return "Suggestion[suggestion=" + suggestion + ", plainTooltip=" + PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNullElseGet(tooltip(), Component::empty)) + ", tooltip=" + Objects.requireNonNullElseGet(tooltip, Component::empty) + "]";
     }
 }

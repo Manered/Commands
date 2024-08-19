@@ -2,11 +2,14 @@ package dev.manere.commands.info;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dev.manere.commands.CommandNode;
+import dev.manere.commands.api.CommandManager;
 import dev.manere.commands.api.CommandsAPI;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds data related to a command.
+ *
+ * @see CommandManager
  */
 public class CommandData {
     private final CommandNode command;

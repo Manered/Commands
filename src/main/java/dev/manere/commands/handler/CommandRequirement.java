@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines a requirement for executing a command.
+ *
+ * @see CommandContext
+ * @see RequirementResult
  */
 @FunctionalInterface
 public interface CommandRequirement {

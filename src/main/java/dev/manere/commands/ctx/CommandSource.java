@@ -14,6 +14,11 @@ import java.util.List;
 
 /**
  * Represents the source of a command, typically a player or console sender.
+ *
+ * @see ForwardingAudience
+ * @see Audience
+ * @see CommandSender
+ * @see Player
  */
 public class CommandSource implements ForwardingAudience {
     private final CommandSender sender;

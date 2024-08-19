@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class EntityTypeArgument implements Argument<EntityType>, AsyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super EntityType>> types() {
         return Argument.newSet(EntityType.class);
     }
@@ -32,6 +34,7 @@ public class EntityTypeArgument implements Argument<EntityType>, AsyncSuggestion
 
     @NotNull
     @Override
+    @Unmodifiable
     public CompletableFuture<List<Suggestion>> suggestions(final @NotNull CommandContext context) {
         return CompletableFuture.supplyAsync(() -> {
             final List<Suggestion> suggestions = new ArrayList<>();

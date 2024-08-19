@@ -7,6 +7,7 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.Set;
 public class BooleanArgument implements Argument<Boolean>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Boolean>> types() {
         return Argument.newSet(Boolean.class, boolean.class);
     }
@@ -26,6 +28,7 @@ public class BooleanArgument implements Argument<Boolean>, SyncSuggestionHandler
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext ctx) {
         return List.of(Suggestion.suggestion("true", false), Suggestion.suggestion("false", false));
     }

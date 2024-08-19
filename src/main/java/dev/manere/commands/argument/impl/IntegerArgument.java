@@ -7,6 +7,7 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.Set;
 public class IntegerArgument implements Argument<Integer>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Integer>> types() {
         return Argument.newSet(Integer.class, int.class);
     }
@@ -32,6 +34,7 @@ public class IntegerArgument implements Argument<Integer>, SyncSuggestionHandler
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         return List.of(
             Suggestion.suggestion("<integer>")

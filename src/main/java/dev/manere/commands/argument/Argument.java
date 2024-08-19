@@ -1,9 +1,12 @@
 package dev.manere.commands.argument;
 
+import dev.manere.commands.ctx.CommandArguments;
 import dev.manere.commands.ctx.CommandContext;
 import dev.manere.commands.exception.ArgumentParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +15,12 @@ import java.util.Set;
  * Represents an argument for a command.
  *
  * @param <A> the type of the argument.
+ *
+ * @see CommandContext
+ * @see CommandArguments
+ * @see ArgumentParseException
+ * @see ListArgument
+ * @see CommandArgument
  */
 public interface Argument<A> {
     /**
@@ -23,6 +32,7 @@ public interface Argument<A> {
      */
     @NotNull
     @SafeVarargs
+    @Unmodifiable
     static <E> Set<E> newSet(final @Nullable E @Nullable ... elements) {
         final Set<E> set = new HashSet<>();
         if (elements == null) return set;
@@ -41,6 +51,7 @@ public interface Argument<A> {
      * @return a set of classes representing the types this argument can parse.
      */
     @NotNull
+    @Unmodifiable
     Set<Class<? super A>> types();
 
     /**

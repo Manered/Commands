@@ -7,6 +7,7 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 public class GreedyStringArgument implements ListArgument<String>, SyncSuggestionHandler {
     @Nullable
     @Override
+    @Unmodifiable
     public String parse(final @NotNull CommandContext context, final int start) throws ArgumentParseException {
         final List<String> arguments = context.argumentsFromOffset();
         final List<String> list = new ArrayList<>();
@@ -25,6 +27,7 @@ public class GreedyStringArgument implements ListArgument<String>, SyncSuggestio
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         return List.of(Suggestion.suggestion("<text>", true));
     }

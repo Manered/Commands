@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles the execution of a command.
+ *
+ * @see CommandContext
  */
 @FunctionalInterface
 public interface ExecutionHandler {

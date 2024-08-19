@@ -7,6 +7,7 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.Set;
 public class FloatArgument implements Argument<Float>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Float>> types() {
         return Argument.newSet(Float.class, float.class);
     }
@@ -32,6 +34,7 @@ public class FloatArgument implements Argument<Float>, SyncSuggestionHandler {
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         return List.of(Suggestion.suggestion("<float>", true));
     }

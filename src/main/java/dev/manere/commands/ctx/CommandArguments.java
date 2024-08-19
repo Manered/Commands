@@ -1,6 +1,7 @@
 package dev.manere.commands.ctx;
 
 import dev.manere.commands.CommandNode;
+import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.argument.ListArgument;
 import dev.manere.commands.exception.ArgumentParseException;
@@ -8,11 +9,14 @@ import dev.manere.commands.exception.IgnorableCommandException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
 /**
  * Represents the arguments of a command in a specific context.
+ *
+ * @see CommandContext
+ * @see CommandArgument
+ * @see Argument
  */
 public class CommandArguments {
     private final CommandContext context;
@@ -101,19 +105,16 @@ public class CommandArguments {
         final Integer argumentPosition = position(argument);
         if (argumentPosition == null || argumentPosition >= context.argumentsFromOffset().size()) return null;
 
-        if (ListArgument.class.isAssignableFrom(argument.argument())) {
+        if (argument.argument().get() instanceof ListArgument<?> listArgument) {
             try {
-                final ListArgument<?> listArgument = (ListArgument<?>) argument.argument().getDeclaredConstructor().newInstance();
                 return type.cast(listArgument.parse(context, argumentPosition));
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                throw new RuntimeException(e);
+            } catch (ArgumentParseException e) {
+                throw ArgumentParseException.exception(e.context(), e.text());
             }
         }
 
         try {
-            return type.cast(argument.argument().getDeclaredConstructor().newInstance().parse(context, context.argumentsFromOffset().get(argumentPosition)));
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            return type.cast(argument.argument().get().parse(context, context.argumentsFromOffset().get(argumentPosition)));
         } catch (ArgumentParseException e) {
             throw ArgumentParseException.exception(e.context(), e.text());
         }
@@ -177,6 +178,31 @@ public class CommandArguments {
             } else {
                 return orGet;
             }
+        }
+
+        return (T) argument;
+    }
+
+    @NotNull
+    public <T> T argumentOr(final @NotNull Class<T> type, final @NotNull String name, final @NotNull Runnable or) {
+        final T argument = argument(type, name);
+
+        if (argument == null) {
+            or.run();
+            throw new IgnorableCommandException();
+        }
+
+        return argument;
+    }
+
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public <T> T argumentOr(final @NotNull String name, final @NotNull Runnable or) {
+        final Object argument = argument(name);
+
+        if (argument == null) {
+            or.run();
+            throw new IgnorableCommandException();
         }
 
         return (T) argument;

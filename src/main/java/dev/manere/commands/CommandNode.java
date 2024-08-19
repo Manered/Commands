@@ -1,12 +1,18 @@
 package dev.manere.commands;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dev.manere.commands.api.CommandManager;
+import dev.manere.commands.api.CommandsAPI;
 import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.handler.ExecutionHandler;
 import dev.manere.commands.handler.CommandRequirement;
 import dev.manere.commands.info.CommandInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -15,6 +21,10 @@ import java.util.function.Supplier;
 /**
  * Represents a command node in a command structure, holding its literal,
  * execution handler, subcommands, and requirements.
+ *
+ * @see CommandManager
+ * @see CommandsAPI
+ * @see CommandNode
  */
 public class CommandNode {
     private final String literal;
@@ -82,13 +92,15 @@ public class CommandNode {
     }
 
     @NotNull
+    @Unmodifiable
     public List<CommandNode> subcommands() {
-        return subcommands;
+        return ImmutableList.copyOf(subcommands);
     }
 
     @NotNull
+    @Unmodifiable
     public List<CommandArgument<?>> arguments() {
-        return arguments;
+        return ImmutableList.copyOf(arguments);
     }
 
     @NotNull
@@ -178,15 +190,18 @@ public class CommandNode {
      * @return a list of command nodes at the specified position.
      */
     @NotNull
+    @Unmodifiable
     public List<CommandNode> nodesAtPosition(final int position) {
         if (position < 0) {
             if (position == -1) return Collections.singletonList(this.root());
             else throw new IllegalArgumentException("Position must be non-negative or -1 for root.");
         }
+
         return nodesAtPosition(root(), position);
     }
 
     @NotNull
+    @Unmodifiable
     private List<CommandNode> nodesAtPosition(final @NotNull CommandNode node, final int position) {
         if (position == 0) return new ArrayList<>(node.subcommands());
 
@@ -194,7 +209,8 @@ public class CommandNode {
         for (CommandNode subcommand : node.subcommands()) {
             result.addAll(nodesAtPosition(subcommand, position - 1));
         }
-        return result;
+
+        return ImmutableList.copyOf(result);
     }
 
     /**
@@ -229,8 +245,9 @@ public class CommandNode {
     }
 
     @NotNull
+    @Unmodifiable
     public Set<CommandRequirement> requirements() {
-        return requirements;
+        return ImmutableSet.copyOf(requirements);
     }
 
     /**
@@ -239,12 +256,14 @@ public class CommandNode {
      * @return a list of all subcommands.
      */
     @NotNull
+    @Unmodifiable
     public List<CommandNode> allSubcommands() {
         final List<CommandNode> allSubcommands = new ArrayList<>();
         collectSubcommands(this.root(), allSubcommands);
-        return allSubcommands;
+        return ImmutableList.copyOf(allSubcommands);
     }
 
+    @ApiStatus.Internal
     private void collectSubcommands(final @NotNull CommandNode node, final @NotNull List<CommandNode> allSubcommands) {
         for (final CommandNode subcommand : node.subcommands()) {
             allSubcommands.add(subcommand);
@@ -252,6 +271,7 @@ public class CommandNode {
         }
     }
 
+    @NotNull
     @Override
     public String toString() {
         if (root().literal().equals(literal())) return "Root of command named " + literal;

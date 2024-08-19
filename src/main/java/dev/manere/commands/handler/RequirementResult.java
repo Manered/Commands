@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the result of a command requirement check.
+ *
+ * @see CommandRequirement
  */
 public class RequirementResult {
     public static final RequirementResult PASSED = RequirementResult.result(-1);
@@ -32,6 +34,7 @@ public class RequirementResult {
     }
 
     @Override
+    @NotNull
     public String toString() {
         return "RequirementResult[result=" + result + "]";
     }

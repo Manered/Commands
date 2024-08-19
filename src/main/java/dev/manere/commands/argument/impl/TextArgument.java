@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -16,6 +17,7 @@ import java.util.Set;
 public class TextArgument implements Argument<Component>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Component>> types() {
         return Argument.newSet(Component.class);
     }
@@ -29,6 +31,7 @@ public class TextArgument implements Argument<Component>, SyncSuggestionHandler 
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         return List.of(Suggestion.suggestion("<text>", true));
     }

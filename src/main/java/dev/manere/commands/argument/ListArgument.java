@@ -1,9 +1,11 @@
 package dev.manere.commands.argument;
 
+import dev.manere.commands.ctx.CommandArguments;
 import dev.manere.commands.ctx.CommandContext;
 import dev.manere.commands.exception.ArgumentParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -12,6 +14,12 @@ import java.util.Set;
  * Represents a list argument for a command.
  *
  * @param <E> the type of elements in the list.
+ *
+ * @see CommandContext
+ * @see CommandArguments
+ * @see ArgumentParseException
+ * @see Argument
+ * @see CommandArgument
  */
 @FunctionalInterface
 public interface ListArgument<E> extends Argument<List<E>> {
@@ -22,6 +30,7 @@ public interface ListArgument<E> extends Argument<List<E>> {
      */
     @NotNull
     @Override
+    @Unmodifiable
     default Set<Class<? super List<E>>> types() {
         throw new UnsupportedOperationException();
     }
@@ -45,6 +54,7 @@ public interface ListArgument<E> extends Argument<List<E>> {
      * @return throws UnsupportedOperationException.
      */
     @Nullable
+    @Unmodifiable
     default List<E> parse(final @NotNull CommandContext context, final @Nullable String text) {
         throw new UnsupportedOperationException();
     }

@@ -21,7 +21,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.regex.Pattern;
 
 @ApiStatus.Internal
 public class CommandRegistrar implements Listener {
+    @ApiStatus.Internal
     public static void register(final @NotNull CommandData data) {
         final JavaPlugin plugin = data.api().plugin();
         final CommandNode root = data.command();
@@ -47,6 +47,7 @@ public class CommandRegistrar implements Listener {
     }
 
     @NotNull
+    @ApiStatus.Internal
     public static Command command(final @NotNull CommandNode root) {
         final Command command = new Command(root.literal()) {
             @NotNull
@@ -86,13 +87,8 @@ public class CommandRegistrar implements Listener {
                 if (currentArgument != null) {
                     SuggestionHandler<?> handler = null;
 
-                    if (SuggestionHandler.class.isAssignableFrom(currentArgument.argument())) {
-                        try {
-                            handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
-                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                                 NoSuchMethodException e) {
-                            throw new RuntimeException(e);
-                        }
+                    if (currentArgument.argument().get() instanceof SuggestionHandler<?> s) {
+                        handler = s;
                     }
 
                     if (handler instanceof SyncSuggestionHandler syncHandler) {
@@ -135,6 +131,7 @@ public class CommandRegistrar implements Listener {
         return command;
     }
 
+    @ApiStatus.Internal
     private static void handle(final @NotNull CommandNode root, final @NotNull CommandSource source, final @NotNull String command, final @NotNull List<String> args) {
         final CommandNode node = node(root, args);
         final CommandContext context = new CommandContext(source, node, node.literal(), command, args);
@@ -158,6 +155,7 @@ public class CommandRegistrar implements Listener {
     }
 
     @NotNull
+    @ApiStatus.Internal
     private static CommandNode node(final @NotNull CommandNode node, final @NotNull List<String> args) {
         CommandNode currentNode = node;
         CommandNode lastValidNode = node;
@@ -180,12 +178,14 @@ public class CommandRegistrar implements Listener {
     }
 
     @NotNull
+    @ApiStatus.Internal
     public AsyncTabCompleteEvent.Completion convert(final @NotNull Suggestion suggestion) {
         return AsyncTabCompleteEvent.Completion.completion(suggestion.suggestion(), suggestion.tooltip());
     }
 
     @EventHandler
-    public void handle(final @NotNull AsyncTabCompleteEvent event) {
+    @ApiStatus.Internal
+    private void handle(final @NotNull AsyncTabCompleteEvent event) {
         final CommandSource source = CommandSource.source(event.getSender());
         final String buffer = event.getBuffer();
 
@@ -218,13 +218,8 @@ public class CommandRegistrar implements Listener {
         if (currentArgument != null) {
             SuggestionHandler<?> handler = null;
 
-            if (SuggestionHandler.class.isAssignableFrom(currentArgument.argument())) {
-                try {
-                    handler = (SuggestionHandler<?>) currentArgument.argument().getDeclaredConstructor().newInstance();
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                         NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                }
+            if (currentArgument.argument() instanceof SuggestionHandler<?> s) {
+                handler = s;
             }
 
             if (handler instanceof AsyncSuggestionHandler asyncHandler) {
@@ -234,7 +229,7 @@ public class CommandRegistrar implements Listener {
 
                 final String lastArg = !args.isEmpty() ? args.getLast() : "";
 
-                List<AsyncTabCompleteEvent.Completion> newCompletions = new ArrayList<>();
+                final List<AsyncTabCompleteEvent.Completion> newCompletions = new ArrayList<>();
 
                 final List<Suggestion> suggestionsJoin = new ArrayList<>(suggestions.join());
 

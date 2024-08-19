@@ -18,6 +18,10 @@ import java.util.Objects;
 
 /**
  * Manages the registration and handling of commands.
+ *
+ * @see CommandsAPI
+ * @see CommandNode
+ * @see BasicCommandNode
  */
 public class CommandManager {
     private final List<CommandData> registeredCommands = new ArrayList<>();
@@ -39,6 +43,7 @@ public class CommandManager {
      * @return a new CommandManager instance.
      */
     @NotNull
+    @ApiStatus.Internal
     protected static CommandManager manager(final @NotNull JavaPlugin plugin) {
         return new CommandManager(plugin);
     }
@@ -75,7 +80,7 @@ public class CommandManager {
      * @param roots the array of BasicCommandNode roots to register.
      * @return the current CommandManager instance for method chaining.
      */
-    @NotNull
+    @NotNull    
     @CanIgnoreReturnValue
     public CommandManager register(final @NotNull BasicCommandNode @NotNull ... roots) {
         for (final BasicCommandNode root : roots) {

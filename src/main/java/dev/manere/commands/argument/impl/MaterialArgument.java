@@ -8,6 +8,7 @@ import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Set;
 public class MaterialArgument implements Argument<Material>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Material>> types() {
         return Argument.newSet(Material.class);
     }
@@ -28,6 +30,7 @@ public class MaterialArgument implements Argument<Material>, SyncSuggestionHandl
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         final List<Suggestion> suggestions = new ArrayList<>();
 

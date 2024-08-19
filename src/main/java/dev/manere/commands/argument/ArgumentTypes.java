@@ -1,32 +1,39 @@
 package dev.manere.commands.argument;
 
+import com.google.common.collect.ImmutableList;
 import dev.manere.commands.argument.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Utility class for managing different types of arguments.
+ *
+ * @see Argument
+ * @see CommandArgument
  */
-public class ArgumentTypes implements Iterable<Class<? extends Argument<?>>> {
-    public static final Class<? extends Argument<?>> DOUBLE = DoubleArgument.class;
-    public static final Class<? extends Argument<?>> ENTITY_TYPE = EntityTypeArgument.class;
-    public static final Class<? extends Argument<?>> FLOAT = FloatArgument.class;
-    public static final Class<? extends Argument<?>> GAME_MODE = GameModeArgument.class;
-    public static final Class<? extends Argument<?>> GREEDY_STRING = GreedyStringArgument.class;
-    public static final Class<? extends Argument<?>> GREEDY_TEXT = GreedyTextArgument.class;
-    public static final Class<? extends Argument<?>> INTEGER = IntegerArgument.class;
-    public static final Class<? extends Argument<?>> LONG = LongArgument.class;
-    public static final Class<? extends Argument<?>> MATERIAL = MaterialArgument.class;
-    public static final Class<? extends Argument<?>> OFFLINE_PLAYER = OfflinePlayerArgument.class;
-    public static final Class<? extends Argument<?>> PLAYER = PlayerArgument.class;
-    public static final Class<? extends Argument<?>> STRING = StringArgument.class;
-    public static final Class<? extends Argument<?>> TEXT = TextArgument.class;
+public class ArgumentTypes implements Iterable<Supplier<Argument<?>>> {
+    public static final Supplier<Argument<?>> DOUBLE = DoubleArgument::new;
+    public static final Supplier<Argument<?>> ENTITY_TYPE = EntityTypeArgument::new;
+    public static final Supplier<Argument<?>> FLOAT = FloatArgument::new;
+    public static final Supplier<Argument<?>> GAME_MODE = GameModeArgument::new;
+    public static final Supplier<Argument<?>> GREEDY_STRING = GreedyStringArgument::new;
+    public static final Supplier<Argument<?>> GREEDY_TEXT = GreedyTextArgument::new;
+    public static final Supplier<Argument<?>> INTEGER = IntegerArgument::new;
+    public static final Supplier<Argument<?>> LONG = LongArgument::new;
+    public static final Supplier<Argument<?>> MATERIAL = MaterialArgument::new;
+    public static final Supplier<Argument<?>> OFFLINE_PLAYER = OfflinePlayerArgument::new;
+    public static final Supplier<Argument<?>> PLAYER = PlayerArgument::new;
+    public static final Supplier<Argument<?>> STRING = StringArgument::new;
+    public static final Supplier<Argument<?>> TEXT = TextArgument::new;
 
     /**
      * Gets a list of all argument types.
@@ -34,13 +41,13 @@ public class ArgumentTypes implements Iterable<Class<? extends Argument<?>>> {
      * @return a list of classes representing all argument types.
      */
     @NotNull
-    public static List<Class<? extends Argument<?>>> values() {
-        final List<Class<? extends Argument<?>>> values = new ArrayList<>();
+    public static List<Supplier<Argument<?>>> values() {
+        final List<Supplier<Argument<?>>> values = new ArrayList<>();
 
         for (final Field field : ArgumentTypes.class.getDeclaredFields()) {
             try {
                 @SuppressWarnings("unchecked")
-                final Class<? extends Argument<?>> value = (Class<? extends Argument<?>>) field.get(null);
+                final Supplier<Argument<?>> value = (Supplier<Argument<?>>) field.get(null);
 
                 values.add(value);
             } catch (IllegalAccessException ignored) {}
@@ -49,114 +56,84 @@ public class ArgumentTypes implements Iterable<Class<? extends Argument<?>>> {
         return values;
     }
 
-    /**
-     * Finds the argument class that can handle the specified argument type.
-     *
-     * @param argumentType the type of the argument to find.
-     * @param <T>          the type of the argument.
-     * @return the class representing the argument type, or null if not found.
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public static <T> Class<? extends Argument<T>> find(final @NotNull Class<T> argumentType) {
-        final List<Class<? extends Argument<?>>> values = values();
-
-        for (final Class<? extends Argument<?>> value : values) {
-            try {
-                final Argument<?> argument = value.getDeclaredConstructor().newInstance();
-                if (argument.types().contains(argumentType)) return (Class<? extends Argument<T>>) value;
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Creates a new instance of the specified class.
-     *
-     * @param clazz the class to instantiate.
-     * @param <T>   the type of the class.
-     * @return a new instance of the class.
-     */
     @NotNull
-    public static <T> T newInstance(final @NotNull Class<T> clazz) {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @NotNull
-    public static Class<? extends Argument<?>> doubleArgument() {
+    public static Supplier<Argument<?>> doubleArgument() {
         return DOUBLE;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> entityType() {
+    public static Supplier<Argument<?>> entityType() {
         return ENTITY_TYPE;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> floatArgument() {
+    public static Supplier<Argument<?>> floatArgument() {
         return FLOAT;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> gameMode() {
+    public static Supplier<Argument<?>> gameMode() {
         return GAME_MODE;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> greedyString() {
+    public static Supplier<Argument<?>> greedyString() {
         return GREEDY_STRING;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> greedyText() {
+    public static Supplier<Argument<?>> greedyText() {
         return GREEDY_TEXT;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> integer() {
+    public static Supplier<Argument<?>> integer() {
         return INTEGER;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> longArgument() {
+    public static Supplier<Argument<?>> longArgument() {
         return LONG;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> material() {
+    public static Supplier<Argument<?>> material() {
         return MATERIAL;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> offlinePlayer() {
+    public static Supplier<Argument<?>> offlinePlayer() {
         return OFFLINE_PLAYER;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> player() {
+    public static Supplier<Argument<?>> player() {
         return PLAYER;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> string() {
+    public static Supplier<Argument<?>> string() {
         return STRING;
     }
 
     @NotNull
-    public static Class<? extends Argument<?>> text() {
+    public static Supplier<Argument<?>> text() {
         return TEXT;
     }
 
     @NotNull
     @Override
-    public Iterator<Class<? extends Argument<?>>> iterator() {
+    public Iterator<Supplier<Argument<?>>> iterator() {
         return values().iterator();
+    }
+
+    @NotNull
+    public Stream<Supplier<Argument<?>>> stream() {
+        return ImmutableList.copyOf(iterator()).stream();
+    }
+
+    @NotNull
+    public Stream<Supplier<Argument<?>>> parallelStream() {
+        return ImmutableList.copyOf(iterator()).parallelStream();
     }
 }

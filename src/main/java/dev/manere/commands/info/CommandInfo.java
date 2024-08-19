@@ -1,9 +1,13 @@
 package dev.manere.commands.info;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dev.manere.commands.CommandNode;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,6 +16,8 @@ import java.util.Set;
 
 /**
  * Contains metadata about a command, such as description, permission, and aliases.
+ *
+ * @see CommandNode
  */
 public class CommandInfo {
     private String description = null;
@@ -104,8 +110,9 @@ public class CommandInfo {
      * @return the aliases of the command.
      */
     @NotNull
+    @Unmodifiable
     public Set<String> aliases() {
-        return aliases;
+        return ImmutableSet.copyOf(aliases);
     }
 
     /**
@@ -157,8 +164,7 @@ public class CommandInfo {
     @NotNull
     @CanIgnoreReturnValue
     public CommandInfo addAliases(final @NotNull String @NotNull ... aliases) {
-        final Set<String> set = aliases();
-        set.addAll(Arrays.asList(aliases));
+        this.aliases.addAll(Arrays.asList(aliases));
         return this;
     }
 

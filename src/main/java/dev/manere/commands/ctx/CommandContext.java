@@ -4,12 +4,17 @@ import com.google.common.collect.ImmutableList;
 import dev.manere.commands.CommandNode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents the context in which a command is executed.
+ *
+ * @see CommandSource
+ * @see CommandNode
+ * @see CommandArguments
  */
 public class CommandContext {
     private final CommandSource source;
@@ -93,8 +98,10 @@ public class CommandContext {
      * @return the raw list of arguments.
      */
     @NotNull
+    @Unmodifiable
+    @ApiStatus.Obsolete
     private List<String> rawArguments() {
-        return argumentsList;
+        return ImmutableList.copyOf(argumentsList);
     }
 
     /**
@@ -103,6 +110,7 @@ public class CommandContext {
      * @return the list of arguments from the offset.
      */
     @NotNull
+    @Unmodifiable
     @ApiStatus.Internal
     public List<String> argumentsFromOffset() {
         final List<String> rawArgumentsCopy = ImmutableList.copyOf(rawArguments());
@@ -114,6 +122,6 @@ public class CommandContext {
         }
 
         // Return the sublist from the offset to the end of the list
-        return new ArrayList<>(rawArgumentsCopy.subList(offset, rawArgumentsCopy.size()));
+        return ImmutableList.copyOf(rawArgumentsCopy.subList(offset, rawArgumentsCopy.size()));
     }
 }

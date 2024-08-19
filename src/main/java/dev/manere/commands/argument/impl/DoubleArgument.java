@@ -7,6 +7,8 @@ import dev.manere.commands.handler.Suggestion;
 import dev.manere.commands.handler.SyncSuggestionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -14,6 +16,7 @@ import java.util.Set;
 public class DoubleArgument implements Argument<Double>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super Double>> types() {
         return Argument.newSet(Double.class, double.class);
     }
@@ -32,6 +35,7 @@ public class DoubleArgument implements Argument<Double>, SyncSuggestionHandler {
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         return List.of(Suggestion.suggestion("<number>", true));
     }

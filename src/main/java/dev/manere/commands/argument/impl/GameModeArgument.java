@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.GameMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Set;
 public class GameModeArgument implements Argument<GameMode>, SyncSuggestionHandler {
     @NotNull
     @Override
+    @Unmodifiable
     public Set<Class<? super GameMode>> types() {
         return Argument.newSet(GameMode.class);
     }
@@ -34,6 +36,7 @@ public class GameModeArgument implements Argument<GameMode>, SyncSuggestionHandl
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Suggestion> suggestions(final @NotNull CommandContext context) {
         final List<Suggestion> suggestions = new ArrayList<>();
 

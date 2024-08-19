@@ -1,10 +1,15 @@
 package dev.manere.commands.exception;
 
+import dev.manere.commands.argument.Argument;
+import dev.manere.commands.ctx.CommandArguments;
 import dev.manere.commands.ctx.CommandContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Exception thrown when an error occurs while parsing command arguments.
+
+ * @see CommandArguments
+ * @see Argument
  */
 public class ArgumentParseException extends RuntimeException {
     private final CommandContext context;

@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Holds the singleton instance of the CommandsAPI.
+ *
+ * @see CommandsAPI
  */
 @ApiStatus.Internal
 public class APIHolder {
@@ -23,7 +25,7 @@ public class APIHolder {
      */
     @NotNull
     public static CommandsAPI api() {
-        if (API == null) throw new NullPointerException();
+        if (API == null) throw new NullPointerException("CommandsAPI was not initialized.");
         return API;
     }
 
@@ -32,6 +34,7 @@ public class APIHolder {
      *
      * @param api the CommandsAPI instance to initialize.
      */
+    @ApiStatus.Internal
     public static void init(final @NotNull CommandsAPI api) {
         API = api;
     }
