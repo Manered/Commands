@@ -48,14 +48,14 @@ public interface BasicCommandNode extends ExecutionHandler {
      * @param root The class type of the root command node to register.
      * @throws RuntimeException If no suitable constructor is found.
      */
-    static void register(final @NotNull CommandsAPI api, final @NotNull Class<? super BasicCommandNode> root) {
+    static void register(final @NotNull CommandsAPI api, final @NotNull Class<? extends BasicCommandNode> root) {
         try {
-            register(api, (BasicCommandNode) root.getDeclaredConstructor().newInstance());
+            register(api, root.getDeclaredConstructor().newInstance());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             api.plugin().getLogger().severe("Attempted to register a basic command node. Couldn't find a empty constructor, attempting to provide a plugin inside the parameters.");
 
             try {
-                register(api, (BasicCommandNode) root.getDeclaredConstructor(api.plugin().getClass()).newInstance(api.plugin()));
+                register(api, root.getDeclaredConstructor(api.plugin().getClass()).newInstance(api.plugin()));
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
                 api.plugin().getLogger().severe("Attempted to register a basic command node. Couldn't find a empty constructor, attempting to provide a plugin inside the parameters.");
                 throw new RuntimeException("Attempted to register a basic command node, couldn't find empty constructor and constructor of parameters JavaPlugin/Plugin/" + api.plugin().getClass().getSimpleName());
@@ -79,7 +79,7 @@ public interface BasicCommandNode extends ExecutionHandler {
      *
      * @param root The class type of the root command node to register.
      */
-    static void register(final @NotNull Class<? super BasicCommandNode> root) {
+    static void register(final @NotNull Class<? extends BasicCommandNode> root) {
         register(APIHolder.api(), root);
     }
 

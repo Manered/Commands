@@ -142,6 +142,7 @@ public class CommandRegistrar implements Listener {
         if (permission != null && !context.source().sender().hasPermission(permission)) {
             final Component permissionMessage = root.info().permissionMessage();
             if (permissionMessage != null) context.source().sendMessage(permissionMessage);
+            context.source().sendMessage(Bukkit.permissionMessage());
             return;
         }
 
