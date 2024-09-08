@@ -211,17 +211,16 @@ public class CommandRegistrar implements Listener {
 
         if (!context.command().arguments().isEmpty() && args.size() > context.command().argumentOffset()) {
             int index = (args.size() - 1) - context.command().argumentOffset();
-            if (index >= 0 && index < context.command().arguments().size()) {
-                currentArgument = context.command().arguments().get(index);
-            }
+            if (index >= 0 && index < context.command().arguments().size()) currentArgument = context.command().arguments().get(index);
         }
 
         if (currentArgument != null) {
             SuggestionHandler<?> handler = null;
 
-            if (currentArgument.argument() instanceof SuggestionHandler<?> s) {
-                handler = s;
-            }
+            final Object object = currentArgument.argument().get();
+
+            if (object instanceof SuggestionHandler<?> s) handler = s;
+            if (handler == null) handler = currentArgument.suggestions();
 
             if (handler instanceof AsyncSuggestionHandler asyncHandler) {
                 final CompletableFuture<List<Suggestion>> suggestions = currentArgument.suggestions() instanceof AsyncSuggestionHandler
