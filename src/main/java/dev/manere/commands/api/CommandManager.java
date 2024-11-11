@@ -103,9 +103,10 @@ public class CommandManager {
 
     @NotNull
     @ApiStatus.Internal
-    private CommandNode convert(final @NotNull BasicCommandNode basicNode) {
+    public static CommandNode convert(final @NotNull BasicCommandNode basicNode) {
         final CommandNode node = CommandNode.of(basicNode.literal(), Objects.requireNonNullElse(basicNode.info(), CommandInfo.info()))
-            .handler(basicNode);
+            .handler(basicNode)
+            .require(basicNode);
 
         for (final CommandArgument<?> argument : basicNode.arguments()) node.argument(argument);
         for (final BasicCommandNode children : basicNode.children()) node.subcommand(convert(children));

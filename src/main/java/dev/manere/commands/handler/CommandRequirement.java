@@ -3,6 +3,8 @@ package dev.manere.commands.handler;
 import dev.manere.commands.ctx.CommandContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 /**
  * Defines a requirement for executing a command.
  *
@@ -10,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @see RequirementResult
  */
 @FunctionalInterface
-public interface CommandRequirement {
+public interface CommandRequirement extends Predicate<CommandContext> {
     /**
      * Checks if the command can be executed in the given context.
      *
@@ -19,4 +21,9 @@ public interface CommandRequirement {
      */
     @NotNull
     RequirementResult require(final @NotNull CommandContext context);
+
+    @Override
+    default boolean test(final @NotNull CommandContext context) {
+        return require(context).equals(RequirementResult.FAILED);
+    }
 }

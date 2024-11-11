@@ -190,7 +190,9 @@ public class CommandRegistrar implements Listener {
         final CommandSource source = CommandSource.source(event.getSender());
         final String buffer = event.getBuffer();
 
-        if (!event.isCommand() || !buffer.startsWith("/") || buffer.indexOf(' ') == -1) return;
+        if (!event.isCommand() || !buffer.startsWith("/") || buffer.indexOf(' ') == -1) {
+            return;
+        }
 
         String[] rawArgs = Pattern.compile(" ").split(buffer, -1);
         rawArgs = rawArgs.length > 1 ? Arrays.copyOfRange(rawArgs, 1, rawArgs.length) : new String[]{""};
@@ -205,32 +207,30 @@ public class CommandRegistrar implements Listener {
 
         final List<AsyncTabCompleteEvent.Completion> completions = new ArrayList<>();
         final CommandNode node = node(root, args);
+
         final CommandContext context = new CommandContext(source, node, node.literal(), alias, args);
 
         CommandArgument<?> currentArgument = null;
 
         if (!context.command().arguments().isEmpty() && args.size() > context.command().argumentOffset()) {
             int index = (args.size() - 1) - context.command().argumentOffset();
-            if (index >= 0 && index < context.command().arguments().size()) currentArgument = context.command().arguments().get(index);
+            if (index >= 0 && index < context.command().arguments().size()) {
+                currentArgument = context.command().arguments().get(index);
+            }
         }
 
         if (currentArgument != null) {
-            SuggestionHandler<?> handler = null;
+            SuggestionHandler<?> handler = currentArgument.suggestions();
 
-            final Object object = currentArgument.argument().get();
-
-            if (object instanceof SuggestionHandler<?> s) handler = s;
-            if (handler == null) handler = currentArgument.suggestions();
+            if (handler == null && currentArgument.argument().get() instanceof SuggestionHandler<?> s) {
+                handler = s;
+            }
 
             if (handler instanceof AsyncSuggestionHandler asyncHandler) {
-                final CompletableFuture<List<Suggestion>> suggestions = currentArgument.suggestions() instanceof AsyncSuggestionHandler
-                    ? ((AsyncSuggestionHandler) currentArgument.suggestions()).suggestions(context)
-                    : asyncHandler.suggestions(context);
-
+                final CompletableFuture<List<Suggestion>> suggestions = asyncHandler.suggestions(context);
                 final String lastArg = !args.isEmpty() ? args.getLast() : "";
 
                 final List<AsyncTabCompleteEvent.Completion> newCompletions = new ArrayList<>();
-
                 final List<Suggestion> suggestionsJoin = new ArrayList<>(suggestions.join());
 
                 for (final Suggestion suggestion : suggestionsJoin) {

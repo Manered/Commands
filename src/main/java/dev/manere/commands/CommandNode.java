@@ -9,6 +9,7 @@ import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.handler.ExecutionHandler;
 import dev.manere.commands.handler.CommandRequirement;
 import dev.manere.commands.info.CommandInfo;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,17 @@ public class CommandNode {
     @NotNull
     public static CommandNode literal(final @NotNull String literal) {
         return of(literal, CommandInfo.info());
+    }
+
+    /**
+     * Creates a CommandNode with the specified literal and default CommandInfo.
+     *
+     * @param literal the command literal.
+     * @return a new CommandNode instance.
+     */
+    @NotNull
+    public static CommandNode node(final @NotNull String literal) {
+        return literal(literal);
     }
 
     /**
@@ -154,6 +166,23 @@ public class CommandNode {
     }
 
     /**
+     * Adds a subcommand to this command node.
+     *
+     * @param bcn the subcommand to add.
+     * @return this CommandNode instance.
+     */
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode subcommand(final @NotNull BasicCommandNode bcn) {
+        final CommandNode subcommand = CommandManager.convert(bcn);
+
+        subcommand.parent(this);
+        this.subcommands.add(subcommand);
+
+        return this;
+    }
+
+    /**
      * Sets the execution handler for this command node.
      *
      * @param execution the execution handler to set.
@@ -164,6 +193,18 @@ public class CommandNode {
     public CommandNode handler(final @NotNull ExecutionHandler execution) {
         this.execution = execution;
         return this;
+    }
+
+    /**
+     * Sets the execution handler for this command node.
+     *
+     * @param execution the execution handler to set.
+     * @return this CommandNode instance.
+     */
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode executes(final @NotNull ExecutionHandler execution) {
+        return handler(execution);
     }
 
     @NotNull

@@ -5,7 +5,10 @@ import dev.manere.commands.api.APIHolder;
 import dev.manere.commands.api.CommandManager;
 import dev.manere.commands.api.CommandsAPI;
 import dev.manere.commands.argument.CommandArgument;
+import dev.manere.commands.ctx.CommandContext;
+import dev.manere.commands.handler.CommandRequirement;
 import dev.manere.commands.handler.ExecutionHandler;
+import dev.manere.commands.handler.RequirementResult;
 import dev.manere.commands.info.CommandInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,7 +28,7 @@ import java.util.List;
  * @see CommandsAPI
  * @see CommandNode
  */
-public interface BasicCommandNode extends ExecutionHandler {
+public interface BasicCommandNode extends ExecutionHandler, CommandRequirement {
     /**
      * Registers a command node with the provided {@link CommandsAPI}.
      *
@@ -140,5 +142,11 @@ public interface BasicCommandNode extends ExecutionHandler {
     @Unmodifiable
     default List<BasicCommandNode> children() {
         return ImmutableList.of();
+    }
+
+    @NotNull
+    @Override
+    default RequirementResult require(final @NotNull CommandContext context) {
+        return RequirementResult.passed();
     }
 }

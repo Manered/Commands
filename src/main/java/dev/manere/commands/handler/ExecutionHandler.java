@@ -1,7 +1,10 @@
 package dev.manere.commands.handler;
 
 import dev.manere.commands.ctx.CommandContext;
+import dev.manere.commands.ctx.CommandSource;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 /**
  * Handles the execution of a command.
@@ -10,6 +13,11 @@ import org.jetbrains.annotations.NotNull;
  */
 @FunctionalInterface
 public interface ExecutionHandler {
+    @NotNull
+    static ExecutionHandler create(final @NotNull Consumer<CommandSource> handler) {
+        return context -> handler.accept(context.source());
+    }
+
     /**
      * Executes the command in the given context.
      *
