@@ -1,118 +1,69 @@
 package dev.manere.commands;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import dev.manere.commands.api.CommandManager;
-import dev.manere.commands.api.CommandsAPI;
 import dev.manere.commands.argument.CommandArgument;
-import dev.manere.commands.handler.ExecutionHandler;
-import dev.manere.commands.handler.CommandRequirement;
-import dev.manere.commands.info.CommandInfo;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 
-/**
- * Represents a command node in a command structure, holding its literal,
- * execution handler, subcommands, and requirements.
- *
- * @see CommandManager
- * @see CommandsAPI
- * @see CommandNode
- */
 public class CommandNode {
+    @NotNull
     private final String literal;
-    private final CommandInfo info;
 
-    private ExecutionHandler execution = ctx -> {};
+    @Nullable
+    private String permission = null;
 
-    private final List<CommandNode> subcommands = new ArrayList<>();
-    private final Set<CommandRequirement> requirements = new HashSet<>();
+    @NotNull
+    private final Set<String> aliases = new HashSet<>();
+
+    @NotNull
+    private final List<Predicate<CommandSender>> filters;
+
+    @NotNull
+    private final List<CommandArgument> arguments = new LinkedList<>();
+
+    @NotNull
+    private final List<CommandNode> children = new ArrayList<>();
+
+    @NotNull
+    private final Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors = new ConcurrentHashMap<>();
 
     @Nullable
     private CommandNode parent = null;
 
-    private final List<CommandArgument<?>> arguments = new ArrayList<>();
+    @Nullable
+    private String description = null;
 
-    private CommandNode(final @NotNull String literal, final @NotNull CommandInfo info) {
+    public CommandNode(final @NotNull String literal) {
         this.literal = literal;
-        this.info = info;
+        this.filters = new ArrayList<>();
+        this.filters.add(sender -> {
+            final String permission = permission().orElse(null);
+            return permission != null && !sender.hasPermission(permission);
+        });
     }
 
-    /**
-     * Creates a CommandNode with the specified literal and default CommandInfo.
-     *
-     * @param literal the command literal.
-     * @return a new CommandNode instance.
-     */
-    @NotNull
-    public static CommandNode literal(final @NotNull String literal) {
-        return of(literal, CommandInfo.info());
-    }
-
-    /**
-     * Creates a CommandNode with the specified literal and default CommandInfo.
-     *
-     * @param literal the command literal.
-     * @return a new CommandNode instance.
-     */
     @NotNull
     public static CommandNode node(final @NotNull String literal) {
+        return new CommandNode(literal);
+    }
+
+    @NotNull
+    public static CommandNode literal(final @NotNull String literal) {
+        return node(literal);
+    }
+
+    @NotNull
+    public static CommandNode of(final @NotNull String literal) {
         return literal(literal);
-    }
-
-    /**
-     * Creates a CommandNode with the specified literal and CommandInfo.
-     *
-     * @param literal the command literal.
-     * @param info    the command info.
-     * @return a new CommandNode instance.
-     */
-    @NotNull
-    public static CommandNode of(final @NotNull String literal, final @NotNull CommandInfo info) {
-        return new CommandNode(literal, info);
-    }
-
-    /**
-     * Creates a new Builder for constructing a CommandNode.
-     *
-     * @return a new Builder instance.
-     */
-    @NotNull
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /**
-     * Creates a new Builder and applies a consumer to it.
-     *
-     * @param consumer a consumer to configure the builder.
-     * @return a new CommandNode instance configured by the consumer.
-     */
-    @NotNull
-    public static Builder builder(final @NotNull Consumer<Builder> consumer) {
-        final Builder builder = builder();
-        consumer.accept(builder);
-        return builder;
-    }
-
-    @NotNull
-    @Unmodifiable
-    public List<CommandNode> subcommands() {
-        return ImmutableList.copyOf(subcommands);
-    }
-
-    @NotNull
-    @Unmodifiable
-    public List<CommandArgument<?>> arguments() {
-        return ImmutableList.copyOf(arguments);
     }
 
     @NotNull
@@ -121,144 +72,145 @@ public class CommandNode {
     }
 
     @NotNull
-    public CommandInfo info() {
-        return info;
+    public Optional<String> permission() {
+        return permission == null ? parent != null ? Optional.ofNullable(parent.permission) : Optional.empty() : Optional.of(permission);
     }
 
-    /**
-     * Adds a command requirement to this node.
-     *
-     * @param requirement the command requirement to add.
-     * @return this CommandNode instance.
-     */
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode require(final @NotNull CommandRequirement requirement) {
-        this.requirements.add(requirement);
+    public CommandNode permission(final @Nullable String permission) {
+        this.permission = permission;
         return this;
     }
 
-    /**
-     * Adds a command argument to this node.
-     *
-     * @param argument the command argument to add.
-     * @return this CommandNode instance.
-     */
+    @NotNull
+    @Unmodifiable
+    public Set<String> aliases() {
+        return Set.copyOf(aliases);
+    }
+
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode argument(final @NotNull CommandArgument<?> argument) {
+    public CommandNode aliases(final @NotNull Collection<String> aliases) {
+        this.aliases.addAll(aliases);
+        return this;
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode aliases(final @NotNull String @NotNull ... aliases) {
+        this.aliases.addAll(Set.of(aliases));
+        return this;
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<Predicate<CommandSender>> filters() {
+        return List.copyOf(filters);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<Predicate<CommandSender>> requirements() {
+        return filters();
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode filter(final @NotNull Predicate<CommandSender> filter) {
+        this.filters.add(filter);
+        return this;
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode requires(final @NotNull Predicate<CommandSender> requires) {
+        return filter(requires);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<? extends CommandArgument> arguments() {
+        return List.copyOf(arguments);
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode argument(final @NotNull CommandArgument argument) {
         this.arguments.add(argument);
         return this;
     }
 
-    /**
-     * Adds a subcommand to this command node.
-     *
-     * @param subcommand the subcommand to add.
-     * @return this CommandNode instance.
-     */
+    @NotNull
+    @Unmodifiable
+    public List<CommandNode> children() {
+        return List.copyOf(children);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<CommandNode> subcommands() {
+        return children();
+    }
+
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode subcommand(final @NotNull CommandNode subcommand) {
-        subcommand.parent(this);
-        this.subcommands.add(subcommand);
+    public CommandNode subcommand(final @NotNull CommandNode child) {
+        this.children.add(child);
         return this;
     }
 
-    /**
-     * Adds a subcommand to this command node.
-     *
-     * @param bcn the subcommand to add.
-     * @return this CommandNode instance.
-     */
+    @NotNull
+    @Unmodifiable
+    public Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors() {
+        return Map.copyOf(executors);
+    }
+
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode subcommand(final @NotNull BasicCommandNode bcn) {
-        final CommandNode subcommand = CommandManager.convert(bcn);
+    public CommandNode executes(final @NotNull Consumer<CommandContext<CommandSender>> executor) {
+        return executes(CommandSender.class, executor);
+    }
 
-        subcommand.parent(this);
-        this.subcommands.add(subcommand);
-
+    @NotNull
+    @CanIgnoreReturnValue
+    @SuppressWarnings("unchecked")
+    public <S extends CommandSender> CommandNode executes(final @NotNull Class<S> senderType, final @NotNull Consumer<CommandContext<S>> executor) {
+        this.executors.put(senderType, ctx -> executor.accept((CommandContext<S>) ctx));
         return this;
     }
 
-    /**
-     * Sets the execution handler for this command node.
-     *
-     * @param execution the execution handler to set.
-     * @return this CommandNode instance.
-     */
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode handler(final @NotNull ExecutionHandler execution) {
-        this.execution = execution;
-        return this;
+    public <S extends CommandSender> CommandNode executes(final @NotNull Class<S> senderType, final @NotNull BiConsumer<S, CommandContext<S>> executor) {
+        return executes(senderType, ctx -> executor.accept(ctx.getSource(), ctx));
     }
 
-    /**
-     * Sets the execution handler for this command node.
-     *
-     * @param execution the execution handler to set.
-     * @return this CommandNode instance.
-     */
     @NotNull
+    public Optional<CommandNode> parent() {
+        return Optional.ofNullable(parent);
+    }
+
+    @NotNull
+    @ApiStatus.Internal
     @CanIgnoreReturnValue
-    public CommandNode executes(final @NotNull ExecutionHandler execution) {
-        return handler(execution);
-    }
-
-    @NotNull
-    public ExecutionHandler execution() {
-        return execution;
-    }
-
-    @Nullable
-    public CommandNode parent() {
-        return parent;
-    }
-
-    @NotNull
-    @CanIgnoreReturnValue
-    CommandNode parent(final @NotNull CommandNode parent) {
+    public CommandNode parent(final @NotNull CommandNode parent) {
         this.parent = parent;
         return this;
     }
 
-    /**
-     * Retrieves all nodes at the specified position in the command hierarchy.
-     *
-     * @param position the position in the command hierarchy.
-     * @return a list of command nodes at the specified position.
-     */
     @NotNull
-    @Unmodifiable
-    public List<CommandNode> nodesAtPosition(final int position) {
-        if (position < 0) {
-            if (position == -1) return Collections.singletonList(this.root());
-            else throw new IllegalArgumentException("Position must be non-negative or -1 for root.");
-        }
-
-        return nodesAtPosition(root(), position);
+    @CanIgnoreReturnValue
+    public CommandNode description(final @Nullable String description) {
+        this.description = description;
+        return this;
     }
 
     @NotNull
-    @Unmodifiable
-    private List<CommandNode> nodesAtPosition(final @NotNull CommandNode node, final int position) {
-        if (position == 0) return new ArrayList<>(node.subcommands());
-
-        final List<CommandNode> result = new ArrayList<>();
-        for (CommandNode subcommand : node.subcommands()) {
-            result.addAll(nodesAtPosition(subcommand, position - 1));
-        }
-
-        return ImmutableList.copyOf(result);
+    public Optional<String> description() {
+        return Optional.ofNullable(description);
     }
 
-    /**
-     * Retrieves the root command node of this command node.
-     *
-     * @return the root CommandNode.
-     */
     @NotNull
     public CommandNode root() {
         CommandNode current = this;
@@ -266,146 +218,24 @@ public class CommandNode {
         return current;
     }
 
-    /**
-     * Calculates the argument offset based on the parent nodes.
-     *
-     * @return the number of parent nodes.
-     */
-    public int argumentOffset() {
-        if (parent == null) return 0;
-
-        int offset = 0;
-        CommandNode current = this;
-
-        while (current.parent != null) {
-            current = current.parent;
-            offset++;
-        }
-
-        return offset;
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CommandNode other)) return false;
+        return other.literal().equals(this.literal()) && other.parent().equals(this.parent());
     }
 
-    @NotNull
-    @Unmodifiable
-    public Set<CommandRequirement> requirements() {
-        return ImmutableSet.copyOf(requirements);
-    }
-
-    /**
-     * Retrieves all subcommands within this command node and its children.
-     *
-     * @return a list of all subcommands.
-     */
-    @NotNull
-    @Unmodifiable
-    public List<CommandNode> allSubcommands() {
-        final List<CommandNode> allSubcommands = new ArrayList<>();
-        collectSubcommands(this.root(), allSubcommands);
-        return ImmutableList.copyOf(allSubcommands);
-    }
-
-    @ApiStatus.Internal
-    private void collectSubcommands(final @NotNull CommandNode node, final @NotNull List<CommandNode> allSubcommands) {
-        for (final CommandNode subcommand : node.subcommands()) {
-            allSubcommands.add(subcommand);
-            collectSubcommands(subcommand, allSubcommands);
-        }
-    }
-
-    @NotNull
     @Override
     public String toString() {
-        if (root().literal().equals(literal())) return "Root of command named " + literal;
-
-        return "Node of literal " + literal + " with root being " + root().literal;
-    }
-
-    /**
-     * Builder for constructing a CommandNode.
-     */
-    public static class Builder {
-        private String literal = null;
-        private CommandInfo info = CommandInfo.info();
-
-        private Builder() {}
-
-        @Nullable
-        public String literal() {
-            return literal;
-        }
-
-        /**
-         * Sets the literal for this command node.
-         *
-         * @param literal the command literal to set.
-         * @return this Builder instance.
-         */
-        @NotNull
-        @CanIgnoreReturnValue
-        public Builder literal(final @NotNull String literal) {
-            this.literal = literal;
-            return this;
-        }
-
-        /**
-         * Gets the command info for this builder.
-         *
-         * @return the command info.
-         */
-        @NotNull
-        public CommandInfo info() {
-            if (info == null) this.info = CommandInfo.info();
-            return info;
-        }
-
-        /**
-         * Sets the command info for this builder.
-         *
-         * @param info the command info to set.
-         * @return this Builder instance.
-         */
-        @NotNull
-        @CanIgnoreReturnValue
-        public Builder info(final @NotNull CommandInfo info) {
-            this.info = info;
-            return this;
-        }
-
-        /**
-         * Sets the command info using a supplier.
-         *
-         * @param supplier the supplier for command info.
-         * @return this Builder instance.
-         */
-        @NotNull
-        @CanIgnoreReturnValue
-        public Builder info(final @NotNull Supplier<CommandInfo> supplier) {
-            this.info = supplier.get();
-            return this;
-        }
-
-        /**
-         * Configures the command info using a consumer.
-         *
-         * @param consumer the consumer to configure the command info.
-         * @return this Builder instance.
-         */
-        @NotNull
-        @CanIgnoreReturnValue
-        public Builder info(final @NotNull Consumer<CommandInfo> consumer) {
-            this.info = CommandInfo.info();
-            consumer.accept(this.info);
-            return this;
-        }
-
-        /**
-         * Builds and returns a new CommandNode instance.
-         *
-         * @return a new CommandNode instance.
-         */
-        @NotNull
-        public CommandNode build() {
-            return CommandNode.of(literal, info);
-        }
+        return this.getClass().getSimpleName()
+            + "["
+            + "literal = " + literal
+            + ", permission = " + permission
+            + ", aliases = " + aliases
+            + ", filters.size = " + filters.size()
+            + ", arguments = " + arguments
+            + ", children.size = " + children.size()
+            + ", executors = " + executors
+            + ", description = " + description
+            + "]";
     }
 }
