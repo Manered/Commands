@@ -13,7 +13,7 @@ public interface CompletionProvider<C> {
     C completes(final @NotNull CommandContext<? extends CommandSender> context);
 
     @NotNull
-    static AsyncCompletionProvider async(final @NotNull AsyncCompletionProvider lambda) {
+    static AsyncCompletionProvider future(final @NotNull AsyncCompletionProvider lambda) {
         return lambda;
     }
 

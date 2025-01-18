@@ -22,9 +22,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -44,8 +42,6 @@ public class CommandAPIBrigadier {
     @NotNull
     @SuppressWarnings("UnstableApiUsage")
     public static LiteralCommandNode<CommandSourceStack> convert(final @NotNull CommandNode node) {
-        System.out.println("Started converting...");
-
         LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal(node.literal())
             .executes(cmd -> {
                 final CommandSender cmdSender = cmd.getSource().getSender();

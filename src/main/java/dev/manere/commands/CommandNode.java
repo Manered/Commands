@@ -218,6 +218,10 @@ public class CommandNode {
         return current;
     }
 
+    public boolean isRoot() {
+        return parent().isEmpty();
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof CommandNode other)) return false;
