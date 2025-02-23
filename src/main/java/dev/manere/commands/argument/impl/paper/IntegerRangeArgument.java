@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.range.IntegerRangeProvider;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class IntegerRangeArgument implements Argument<IntegerRangeProvider, IntegerRangeProvider> {
     @Override
     public @NotNull ArgumentType<IntegerRangeProvider> getNativeType() {

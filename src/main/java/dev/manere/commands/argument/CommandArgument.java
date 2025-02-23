@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+@SuppressWarnings("UnstableApiUsage")
 public interface CommandArgument {
     @NotNull
     default Optional<CompletionProvider<?>> getCompletions() {

@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class WorldArgument implements Argument<World, World> {
     @Override
     public @NotNull ArgumentType<World> getNativeType() {

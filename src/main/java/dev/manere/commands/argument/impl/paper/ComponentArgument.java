@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class ComponentArgument implements Argument<Component, Component> {
     @Override
     public @NotNull ArgumentType<Component> getNativeType() {

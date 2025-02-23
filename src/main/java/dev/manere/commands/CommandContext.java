@@ -36,6 +36,22 @@ public class CommandContext<S extends CommandSender> {
     }
 
     @NotNull
+    public <T> T getRequiredArgument(final @NotNull String key, final @NotNull Class<T> type) {
+        return getRequiredArgument(type, key);
+    }
+
+    @NotNull
+    public <T> T getRequiredArgument(final @NotNull Class<T> type, final @NotNull String key) {
+        return getArgument(type, key).orElseThrow();
+    }
+
+    @NotNull
+    public <T> Optional<T> getArgument(final @NotNull String key, final @NotNull Class<T> type) {
+        return getArgument(type, key);
+    }
+
+    @NotNull
+    @SuppressWarnings("unchecked")
     public <T> Optional<T> getArgument(final @NotNull Class<T> type, final @NotNull String key) {
         try {
             final Field field = stack.getClass().getDeclaredField("arguments");

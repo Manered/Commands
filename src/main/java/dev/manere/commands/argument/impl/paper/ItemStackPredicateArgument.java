@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.predicate.ItemStackPredicate;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class ItemStackPredicateArgument implements Argument<ItemStackPredicate, ItemStackPredicate> {
     @Override
     public @NotNull ArgumentType<ItemStackPredicate> getNativeType() {

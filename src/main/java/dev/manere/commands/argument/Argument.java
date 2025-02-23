@@ -12,6 +12,7 @@ import java.util.List;
 @SuppressWarnings("UnstableApiUsage")
 public interface Argument<V, N> {
     @Nullable
+    @SuppressWarnings("unchecked")
     default V convert(final @NotNull CommandSourceStack stack, final @NotNull N nativeValue) throws CommandSyntaxException {
         if (nativeValue instanceof ArgumentResolver<?> argumentResolver) {
             final var values = argumentResolver.resolve(stack);

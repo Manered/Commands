@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.range.DoubleRangeProvider;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class DoubleRangeArgument implements Argument<DoubleRangeProvider, DoubleRangeProvider> {
     @Override
     public @NotNull ArgumentType<DoubleRangeProvider> getNativeType() {

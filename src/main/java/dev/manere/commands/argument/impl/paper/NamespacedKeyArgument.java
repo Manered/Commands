@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class NamespacedKeyArgument implements Argument<NamespacedKey, NamespacedKey> {
     @Override
     public @NotNull ArgumentType<NamespacedKey> getNativeType() {

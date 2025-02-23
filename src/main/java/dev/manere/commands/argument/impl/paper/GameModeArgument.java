@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.GameMode;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class GameModeArgument implements Argument<GameMode, GameMode> {
     @Override
     public @NotNull ArgumentType<GameMode> getNativeType() {

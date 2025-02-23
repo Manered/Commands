@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.scoreboard.Criteria;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class ObjectiveCriteriaArgument implements Argument<Criteria, Criteria> {
     @Override
     public @NotNull ArgumentType<Criteria> getNativeType() {

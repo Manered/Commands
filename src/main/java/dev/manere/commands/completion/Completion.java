@@ -36,7 +36,22 @@ public class Completion {
 
     @NotNull
     public static Completion completion(final @NotNull Object object) {
-        return completion(object.toString(), null);
+        return completion(object, null);
+    }
+
+    @NotNull
+    public static Completion completion(final @NotNull Object object, final @Nullable Component tooltip) {
+        return completion(object.toString(), tooltip);
+    }
+
+    @NotNull
+    public static Completion convert(final @NotNull Object object, final @Nullable Component tooltip) {
+        return object instanceof Completion completion ? completion : completion(object, tooltip);
+    }
+
+    @NotNull
+    public static Completion convert(final @NotNull Object object) {
+        return convert(object, null);
     }
 
     @NotNull
@@ -47,6 +62,16 @@ public class Completion {
     @NotNull
     public Component getTooltip() {
         return tooltip != null ? tooltip : Component.empty();
+    }
+
+    @NotNull
+    public Completion withTooltip(final @NotNull Component tooltip) {
+        return Completion.completion(getText(), tooltip);
+    }
+
+    @NotNull
+    public Completion withText(final @NotNull String text) {
+        return Completion.completion(text, getTooltip());
     }
 
     @Override

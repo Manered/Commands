@@ -8,6 +8,7 @@ import io.papermc.paper.math.FinePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("UnstableApiUsage")
 public class FinePositionArgument implements Argument<FinePosition, FinePositionResolver> {
     private boolean centerIntegers = false;
 

@@ -36,8 +36,8 @@ public class SingleCommandArgument<A extends Argument<?, ?>> implements CommandA
         return key;
     }
 
-    @Override
     @NotNull
+    @Override
     public Optional<CompletionProvider<?>> getCompletions() {
         return Optional.ofNullable(completions);
     }

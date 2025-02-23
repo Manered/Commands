@@ -102,6 +102,8 @@ public class CommandAPI {
             .permission(basicNode.getPermission().orElse(null))
             .aliases(basicNode.getAliases());
 
+        basicNode.configure(node);
+
         for (final CommandArgument argument : basicNode.getArguments()) node.argument(argument);
         for (final Object child : basicNode.getChildren()) {
             if (child instanceof BasicCommandNode basicChild) {

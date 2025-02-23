@@ -35,5 +35,8 @@ public interface BasicCommandNode {
         return List.of();
     }
 
+    // If you want to set the description, add any filters, etc.
+    default void configure(final @NotNull CommandNode node) {}
+
     void execute(final @NotNull CommandContext<? extends CommandSender> context);
 }

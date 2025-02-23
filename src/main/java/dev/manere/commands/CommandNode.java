@@ -237,8 +237,8 @@ public class CommandNode {
             + ", aliases = " + aliases
             + ", filters.size = " + filters.size()
             + ", arguments = " + arguments
-            + ", children.size = " + children.size()
-            + ", executors = " + executors
+            + ", children = " + children
+            + ", executors.size = " + executors.size()
             + ", description = " + description
             + "]";
     }

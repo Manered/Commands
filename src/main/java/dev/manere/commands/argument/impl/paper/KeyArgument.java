@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class KeyArgument implements Argument<Key, Key> {
     @Override
     public @NotNull ArgumentType<Key> getNativeType() {

@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.HeightMap;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class HeightMapArgument implements Argument<HeightMap, HeightMap> {
     @Override
     public @NotNull ArgumentType<HeightMap> getNativeType() {

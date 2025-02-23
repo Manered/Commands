@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.block.structure.StructureRotation;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class TemplateRotationArgument implements Argument<StructureRotation, StructureRotation> {
     @Override
     public @NotNull ArgumentType<StructureRotation> getNativeType() {

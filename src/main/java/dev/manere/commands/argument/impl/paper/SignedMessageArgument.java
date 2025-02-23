@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.argument.SignedMessageResolver;
 import net.kyori.adventure.chat.SignedMessage;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class SignedMessageArgument implements Argument<SignedMessage, SignedMessageResolver> {
     @Override
     public @NotNull ArgumentType<SignedMessageResolver> getNativeType() {

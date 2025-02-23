@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySele
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class EntityArgument implements Argument<Entity, EntitySelectorArgumentResolver> {
     @Override
     public @NotNull ArgumentType<EntitySelectorArgumentResolver> getNativeType() {

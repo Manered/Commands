@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.block.structure.Mirror;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class TemplateMirrorArgument implements Argument<Mirror, Mirror> {
     @Override
     public @NotNull ArgumentType<Mirror> getNativeType() {

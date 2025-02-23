@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.block.BlockState;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class BlockStateArgument implements Argument<BlockState, BlockState> {
     @Override
     public @NotNull ArgumentType<BlockState> getNativeType() {

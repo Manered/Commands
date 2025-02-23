@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.PlayerProfileListResolver;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class PlayerProfileArgument implements Argument<PlayerProfile, PlayerProfileListResolver> {
     @Override
     public @NotNull ArgumentType<PlayerProfileListResolver> getNativeType() {

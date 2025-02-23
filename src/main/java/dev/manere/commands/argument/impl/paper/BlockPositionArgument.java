@@ -10,6 +10,7 @@ import io.papermc.paper.math.BlockPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("UnstableApiUsage")
 public class BlockPositionArgument implements Argument<BlockPosition, BlockPositionResolver> {
     @Override
     public @Nullable BlockPosition convert(@NotNull CommandSourceStack stack, @NotNull BlockPositionResolver nativeValue) throws CommandSyntaxException {

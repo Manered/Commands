@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class NamedColorArgument implements Argument<NamedTextColor, NamedTextColor> {
     @Override
     public @NotNull ArgumentType<NamedTextColor> getNativeType() {

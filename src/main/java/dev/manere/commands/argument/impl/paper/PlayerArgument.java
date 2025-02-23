@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSele
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class PlayerArgument implements Argument<Player, PlayerSelectorArgumentResolver> {
     @Override
     public @NotNull ArgumentType<PlayerSelectorArgumentResolver> getNativeType() {
