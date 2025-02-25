@@ -22,6 +22,9 @@ public interface CommandArgument {
     }
 
     @NotNull
+    String getKey();
+
+    @NotNull
     static <V, N> Argument<V, N> buildType(final @NotNull ArgumentType<N> nativeArgumentType) {
         return () -> nativeArgumentType;
     }

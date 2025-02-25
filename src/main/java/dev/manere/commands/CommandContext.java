@@ -42,17 +42,70 @@ public class CommandContext<S extends CommandSender> {
 
     @NotNull
     public <T> T getRequiredArgument(final @NotNull Class<T> type, final @NotNull String key) {
-        return getArgument(type, key).orElseThrow();
+        return getOptionalArgument(type, key).orElseThrow(() -> {
+            final String similarFound = findSimilar(key);
+            String text = "Required argument " + key + " not found.";
+            if (similarFound != null) {
+                text += ", did you mean " + similarFound;
+            }
+
+            return new RuntimeException(text);
+        });
+    }
+
+    @ApiStatus.Internal
+    private boolean isSimilar(final @NotNull String a, final @NotNull String b) {
+        if (a.equalsIgnoreCase(b)) return true;
+
+        int maxLength = Math.max(a.length(), b.length());
+        int distance = levenshteinDistance(a, b);
+
+        return distance <= Math.max(1, maxLength / 4);
+    }
+
+    @ApiStatus.Internal
+    private int levenshteinDistance(final @NotNull String a, final @NotNull String b) {
+        int[][] dp = new int[a.length() + 1][b.length() + 1];
+
+        for (int i = 0; i <= a.length(); i++) {
+            for (int j = 0; j <= b.length(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else {
+                    dp[i][j] = Math.min(
+                        Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                        dp[i - 1][j - 1] + (a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1)
+                    );
+                }
+            }
+        }
+
+        return dp[a.length()][b.length()];
+    }
+
+    @Nullable
+    @ApiStatus.Internal
+    private String findSimilar(final @NotNull String provided) {
+        for (final CommandArgument argument : getNode().arguments()) {
+            final String key = argument.getKey();
+            if (isSimilar(key, provided)) {
+                return key;
+            }
+        }
+
+        return null;
     }
 
     @NotNull
-    public <T> Optional<T> getArgument(final @NotNull String key, final @NotNull Class<T> type) {
-        return getArgument(type, key);
+    public <T> Optional<T> getOptionalArgument(final @NotNull String key, final @NotNull Class<T> type) {
+        return getOptionalArgument(type, key);
     }
 
     @NotNull
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getArgument(final @NotNull Class<T> type, final @NotNull String key) {
+    public <T> Optional<T> getOptionalArgument(final @NotNull Class<T> type, final @NotNull String key) {
         try {
             final Field field = stack.getClass().getDeclaredField("arguments");
             field.setAccessible(true);

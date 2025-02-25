@@ -32,6 +32,7 @@ public class SingleCommandArgument<A extends Argument<?, ?>> implements CommandA
     }
 
     @NotNull
+    @Override
     public String getKey() {
         return key;
     }
