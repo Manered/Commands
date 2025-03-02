@@ -97,8 +97,7 @@ public class CommandAPI {
     @NotNull
     @ApiStatus.Internal
     private CommandNode convert(final @NotNull BasicCommandNode basicNode) {
-        final CommandNode node = CommandNode.of(basicNode.getLiteral())
-            .executes(basicNode::execute)
+        final CommandNode node = CommandNode.of(basicNode.getLiteral(), basicNode::execute)
             .permission(basicNode.getPermission().orElse(null))
             .aliases(basicNode.getAliases());
 

@@ -67,6 +67,21 @@ public class CommandNode {
     }
 
     @NotNull
+    public static CommandNode node(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
+        return of(literal).executes(executor);
+    }
+
+    @NotNull
+    public static CommandNode literal(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
+        return node(literal, executor);
+    }
+
+    @NotNull
+    public static CommandNode of(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
+        return literal(literal, executor);
+    }
+
+    @NotNull
     public String literal() {
         return literal;
     }
@@ -158,6 +173,18 @@ public class CommandNode {
     public CommandNode subcommand(final @NotNull CommandNode child) {
         this.children.add(child);
         return this;
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode subcommand(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
+        return subcommand(new CommandNode(literal).executes(executor));
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public <S extends CommandSender> CommandNode subcommand(final @NotNull String literal, final @NotNull Class<S> senderType, final @NotNull Consumer<CommandContext<S>> executor) {
+        return subcommand(new CommandNode(literal).executes(senderType, executor));
     }
 
     @NotNull
