@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CommandAPIConfig {
+public final class CommandAPIConfig {
     private final Map<CommandAPIOption<?>, Object> options = new ConcurrentHashMap<>();
 
     @NotNull
@@ -22,9 +22,13 @@ public class CommandAPIConfig {
     @NotNull
     public <V> Optional<V> get(final @NotNull CommandAPIOption<V> option) {
         final Optional<V> defaultValue = option.getDefaultValue();
-        final Optional<V> customValue = Optional.ofNullable(option.getType().cast(options.get(option)));
 
-        return customValue.isPresent() ? customValue : defaultValue;
+        try {
+            final Optional<V> customValue = Optional.ofNullable((V) options.get(option));
+            return customValue.isPresent() ? customValue : defaultValue;
+        } catch (final ClassCastException ignored) {
+            return defaultValue;
+        }
     }
 
     @NotNull

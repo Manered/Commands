@@ -3,6 +3,7 @@ package dev.manere.commands;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class CommandNode {
+public final class CommandNode {
     @NotNull
     private final String literal;
 
@@ -177,6 +178,29 @@ public class CommandNode {
 
     @NotNull
     @CanIgnoreReturnValue
+    public CommandNode copy(final @NotNull String sourceLiteral) {
+        final CommandNode parent = parent().orElse(root());
+        final CommandNode source = parent.subcommands().stream()
+            .filter(node -> node.literal().equals(sourceLiteral))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Source command not found: " + sourceLiteral));
+
+        final CommandNode copy = new CommandNode(source.literal)
+            .permission(source.permission)
+            .aliases(source.aliases)
+            .description(source.description);
+
+        source.filters.forEach(copy::filter);
+        source.arguments.forEach(copy::argument);
+        source.executors.forEach((unused, action) -> copy.executes(CommandSender.class, (sender, ctx) -> action.accept(ctx)));
+        source.children.forEach(child -> copy.subcommand(child.copy(child.literal)));
+
+        return copy;
+    }
+
+
+    @NotNull
+    @CanIgnoreReturnValue
     public CommandNode subcommand(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
         return subcommand(new CommandNode(literal).executes(executor));
     }
@@ -210,7 +234,19 @@ public class CommandNode {
     @NotNull
     @CanIgnoreReturnValue
     public <S extends CommandSender> CommandNode executes(final @NotNull Class<S> senderType, final @NotNull BiConsumer<S, CommandContext<S>> executor) {
-        return executes(senderType, ctx -> executor.accept(ctx.getSource(), ctx));
+        return executes(senderType, (ctx) -> executor.accept(ctx.getSource(), ctx));
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode executesPlayer(final @NotNull BiConsumer<Player, CommandContext<Player>> executor) {
+        return executes(Player.class, executor);
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode executesPlayer(final @NotNull Consumer<CommandContext<Player>> executor) {
+        return executes(Player.class, executor);
     }
 
     @NotNull

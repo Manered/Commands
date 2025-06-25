@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class SingleCommandArgument<A extends Argument<?, ?>> implements CommandArgument {
+public final class SingleCommandArgument<A extends Argument<?, ?>> implements CommandArgument {
     @NotNull
     private final Supplier<A> argument;
 

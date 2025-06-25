@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @SuppressWarnings("UnstableApiUsage")
-public class CommandAPIBrigadier {
+public final class CommandAPIBrigadier {
     @NotNull
     @SuppressWarnings("unchecked")
     public static <S extends CommandSender> CommandContext<S> buildContext(final @NotNull CommandNode node, final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stack) {
@@ -58,7 +58,7 @@ public class CommandAPIBrigadier {
                 return true;
             });
 
-        if (!node.executors().isEmpty() && node.arguments().isEmpty()) {
+        if (!node.executors().isEmpty() && (node.arguments().isEmpty() || !node.arguments().getFirst().isRequired())) {
             builder.executes(cmd -> {
                 final CommandSender cmdSender = cmd.getSource().getSender();
 
@@ -90,7 +90,7 @@ public class CommandAPIBrigadier {
 
                     final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, type);
 
-                    if (!argument.isRequired() || (argument.isRequired() && getLastRequiredArgumentIndex(arguments) == i)) {
+                    if (!argument.isRequired() || getLastRequiredArgumentIndex(arguments) == i) {
                         argumentBuilder.executes(cmd -> {
                             final CommandSender cmdSender = cmd.getSource().getSender();
 
@@ -143,6 +143,7 @@ public class CommandAPIBrigadier {
                 return i;
             }
         }
+
         return -1;
     }
 

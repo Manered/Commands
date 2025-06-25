@@ -5,6 +5,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
+import io.papermc.paper.brigadier.PaperBrigadier;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -21,7 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class CommandAPI {
+public final class CommandAPI {
     @Nullable
     public static CommandAPI INSTANCE = null;
 
@@ -73,17 +74,30 @@ public class CommandAPI {
         return plugin;
     }
 
+    public void register(final @NotNull CommandNode @NotNull ... roots) {
+        for (final CommandNode root : roots) register(root);
+    }
+
+    public void register(final @NotNull BasicCommandNode @NotNull ... roots) {
+        for (final BasicCommandNode root : roots) register(root);
+    }
+
     @SuppressWarnings("UnstableApiUsage")
     public void register(final @NotNull CommandNode root) {
+        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(false);
+
         getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
             final Commands commands = event.registrar();
 
             final LiteralCommandNode<CommandSourceStack> converted = CommandAPIBrigadier.convert(root);
 
             commands.register(converted, root.description().orElse(null), root.aliases());
+            if (!silentLogs) plugin.getLogger().info("Registered command " + root.literal() + ".");
 
             for (final Player player : Bukkit.getOnlinePlayers()) {
+                if (!silentLogs) plugin.getLogger().info("Updating commands...");
                 player.updateCommands();
+                if (!silentLogs) plugin.getLogger().info("Updated commands.");
             }
         }));
 

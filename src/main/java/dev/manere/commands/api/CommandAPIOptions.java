@@ -8,14 +8,17 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface CommandAPIOptions {
+public final class CommandAPIOptions {
     @NotNull
-    Set<CommandAPIOption<?>> REGISTRY = new HashSet<>();
+    public static final Set<CommandAPIOption<?>> REGISTRY = new HashSet<>();
+
+    @NotNull
+    public static final CommandAPIOption<Boolean> SILENT_LOGS = register("silent_logs", false);
 
     @NotNull
     @ApiStatus.Internal
-    private static <V> CommandAPIOption<V> register(final @NotNull String key, final @NotNull Class<V> type, final @Nullable V defaultValue) {
-        final CommandAPIOption<V> option = new CommandAPIOption<>(key, type, defaultValue);
+    public static <V> CommandAPIOption<V> register(final @NotNull String key, final @Nullable V defaultValue) {
+        final CommandAPIOption<V> option = new CommandAPIOption<>(key, defaultValue);
         REGISTRY.add(option);
 
         return option;
@@ -23,13 +26,13 @@ public interface CommandAPIOptions {
 
     @NotNull
     @ApiStatus.Internal
-    private static <V> CommandAPIOption<V> register(final @NotNull String key, final @NotNull Class<V> type) {
-        return register(key, type, null);
+    public static <V> CommandAPIOption<V> register(final @NotNull String key) {
+        return register(key, null);
     }
 
     @NotNull
     @Unmodifiable
-    static Set<CommandAPIOption<?>> getRegistry() {
+    public static Set<CommandAPIOption<?>> getRegistry() {
         return Set.copyOf(REGISTRY);
     }
 }

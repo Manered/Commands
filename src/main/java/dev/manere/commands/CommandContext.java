@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @SuppressWarnings("UnstableApiUsage")
-public class CommandContext<S extends CommandSender> {
+public final class CommandContext<S extends CommandSender> {
     private final S source;
     private final CommandNode node;
 
