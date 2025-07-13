@@ -179,7 +179,7 @@ public final class CommandNode {
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode copy(final @NotNull String sourceLiteral) {
-        final CommandNode parent = parent().orElse(root());
+        final CommandNode parent = parent().orElse(root()); 
         final CommandNode source = parent.subcommands().stream()
             .filter(node -> node.literal().equals(sourceLiteral))
             .findFirst()
