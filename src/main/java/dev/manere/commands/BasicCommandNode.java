@@ -1,5 +1,6 @@
 package dev.manere.commands;
 
+import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
@@ -39,4 +40,12 @@ public interface BasicCommandNode {
     default void configure(final @NotNull CommandNode node) {}
 
     void execute(final @NotNull CommandContext<? extends CommandSender> context);
+
+    default void register() {
+        CommandAPI.getInstance().ifPresent(this::register);
+    }
+
+    default void register(final @NotNull CommandAPI api) {
+        api.register(this);
+    }
 }

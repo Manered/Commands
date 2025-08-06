@@ -1,6 +1,7 @@
 package dev.manere.commands;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -304,5 +305,13 @@ public final class CommandNode {
             + ", executors.size = " + executors.size()
             + ", description = " + description
             + "]";
+    }
+
+    public void register() {
+        CommandAPI.getInstance().ifPresent(this::register);
+    }
+
+    public void register(final @NotNull CommandAPI api) {
+        api.register(this);
     }
 }

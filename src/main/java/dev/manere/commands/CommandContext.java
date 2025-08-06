@@ -6,6 +6,7 @@ import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.argument.SingleCommandArgument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,11 @@ public final class CommandContext<S extends CommandSender> {
         this.node = node;
         this.input = input;
         this.stack = stack;
+    }
+
+    @NotNull
+    public Optional<Player> getAsPlayer() {
+        return getSource() instanceof Player player ? Optional.of(player) : Optional.empty();
     }
 
     @NotNull

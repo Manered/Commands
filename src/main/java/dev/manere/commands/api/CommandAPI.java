@@ -5,7 +5,6 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
-import io.papermc.paper.brigadier.PaperBrigadier;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
