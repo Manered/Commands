@@ -2,6 +2,7 @@ package dev.manere.commands.api;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -105,6 +107,77 @@ public final class CommandAPI {
 
     public void register(final @NotNull BasicCommandNode root) {
         register(convert(root));
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public void unregister(final @NotNull String label) {
+        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(false);
+
+        getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
+            final Commands commands = event.registrar();
+
+            registeredCommands.removeIf(node ->
+                node.literal().equalsIgnoreCase(label) || node.aliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(label))
+            );
+
+            try {
+                final var commandMap = Bukkit.getCommandMap();
+                final var bukkitCommand = commandMap.getCommand(label);
+
+                if (bukkitCommand != null) {
+                    bukkitCommand.unregister(commandMap);
+                    commandMap.getKnownCommands().remove(label.toLowerCase());
+
+                    for (final String alias : bukkitCommand.getAliases()) {
+                        commandMap.getKnownCommands().remove(alias.toLowerCase());
+                    }
+
+                    if (!silentLogs) plugin.getLogger().info("Unregistered Bukkit command " + label + ".");
+                }
+            } catch (final Exception e) {
+                plugin.getLogger().warning("Failed to unregister Bukkit command " + label + ": " + e.getMessage());
+            }
+
+            try {
+                final var dispatcher = commands.getDispatcher();
+                final var root = dispatcher.getRoot();
+
+                removeChild(root, label.toLowerCase());
+
+                if (!silentLogs) plugin.getLogger().info("Unregistered Brigadier command " + label + ".");
+            } catch (final Exception e) {
+                plugin.getLogger().warning("Failed to unregister Brigadier command " + label + ": " + e.getMessage());
+            }
+
+            for (final Player player : Bukkit.getOnlinePlayers()) {
+                if (!silentLogs) plugin.getLogger().info("Updating commands...");
+                player.updateCommands();
+                if (!silentLogs) plugin.getLogger().info("Updated commands.");
+            }
+        }));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S> void removeChild(final com.mojang.brigadier.tree.CommandNode<S> parent, final String name) {
+        try {
+            final var childrenField = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField("children");
+            final var literalsField = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField("literals");
+            final var argumentsField = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField("arguments");
+
+            childrenField.setAccessible(true);
+            literalsField.setAccessible(true);
+            argumentsField.setAccessible(true);
+
+            final var children = (Map<String, com.mojang.brigadier.tree.CommandNode<S>>) childrenField.get(parent);
+            final var literals = (Map<String, com.mojang.brigadier.tree.LiteralCommandNode<S>>) literalsField.get(parent);
+            final var arguments = (Map<String, com.mojang.brigadier.tree.ArgumentCommandNode<S, ?>>) argumentsField.get(parent);
+
+            children.remove(name);
+            literals.remove(name);
+            arguments.remove(name);
+        } catch (final ReflectiveOperationException e) {
+            plugin.getLogger().warning("Failed to unregister Brigadier command " + name + ": " + e.getMessage());
+        }
     }
 
     @NotNull

@@ -288,9 +288,11 @@ public final class CommandNode {
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) return true;
         if (!(obj instanceof CommandNode other)) return false;
-        return other.literal().equals(this.literal()) && other.parent().equals(this.parent());
+        return Objects.equals(this.literal, other.literal) && Objects.equals(this.parent, other.parent);
     }
+
 
     @Override
     public String toString() {
@@ -305,6 +307,11 @@ public final class CommandNode {
             + ", executors.size = " + executors.size()
             + ", description = " + description
             + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(literal, parent);
     }
 
     public void register() {
