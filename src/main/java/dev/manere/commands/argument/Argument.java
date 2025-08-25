@@ -2,6 +2,7 @@ package dev.manere.commands.argument;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.manere.commands.completion.CompletionProvider;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.resolvers.ArgumentResolver;
 import org.jetbrains.annotations.NotNull;
@@ -32,4 +33,9 @@ public interface Argument<V, N> {
 
     @NotNull
     ArgumentType<N> getNativeType();
+
+    @NotNull
+    default CompletionProvider<?> getDefaultCompletions() {
+        return CompletionProvider.EMPTY;
+    }
 }

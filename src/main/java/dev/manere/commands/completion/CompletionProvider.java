@@ -5,6 +5,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -25,5 +26,13 @@ public interface CompletionProvider<C> {
     @NotNull
     static AsyncCompletionProvider async(final @NotNull Function<CommandContext<? extends CommandSender>, Collection<Completion>> function) {
         return context -> CompletableFuture.supplyAsync(() -> function.apply(context));
+    }
+
+    @NotNull
+    EmptyCompletionProvider EMPTY = context -> Collections.emptyList();
+
+    @NotNull
+    static EmptyCompletionProvider empty() {
+        return EMPTY;
     }
 }

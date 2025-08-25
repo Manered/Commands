@@ -6,7 +6,7 @@ import dev.manere.commands.argument.Argument;
 import org.jetbrains.annotations.NotNull;
 
 public class DoubleArgument implements Argument<Double, Double> {
-    private double minimum = Double.MIN_VALUE;
+    private double minimum = -Double.MAX_VALUE;
     private double maximum = Double.MAX_VALUE;
 
     public DoubleArgument(final double minimum, final double maximum) {
@@ -22,8 +22,8 @@ public class DoubleArgument implements Argument<Double, Double> {
 
     @Override
     public @NotNull ArgumentType<Double> getNativeType() {
-        if (minimum == Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return DoubleArgumentType.doubleArg();
-        if (minimum != Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return DoubleArgumentType.doubleArg(minimum);
+        if (minimum == -Double.MAX_VALUE && maximum == Integer.MAX_VALUE) return DoubleArgumentType.doubleArg();
+        if (minimum != -Double.MAX_VALUE && maximum == Integer.MAX_VALUE) return DoubleArgumentType.doubleArg(minimum);
         return DoubleArgumentType.doubleArg(minimum, maximum);
     }
 }

@@ -1,8 +1,6 @@
 package dev.manere.commands;
 
 import com.mojang.brigadier.context.ParsedArgument;
-import dev.manere.commands.api.CommandAPI;
-import dev.manere.commands.api.CommandAPIOptions;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.argument.SingleCommandArgument;
@@ -16,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class CommandContext<S extends CommandSender> {
@@ -115,8 +112,6 @@ public final class CommandContext<S extends CommandSender> {
     @NotNull
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getOptionalArgument(final @NotNull Class<T> type, final @NotNull String key) {
-        final boolean silentLogs = CommandAPI.getInstance().isPresent() && CommandAPI.getInstance().get().getConfig().get(CommandAPIOptions.SILENT_LOGS).orElse(true);
-
         try {
             final Field field = stack.getClass().getDeclaredField("arguments");
             field.setAccessible(true);
@@ -124,19 +119,11 @@ public final class CommandContext<S extends CommandSender> {
 
             final var argument = (SingleCommandArgument<? extends Argument<Object, Object>>) getArgument(key);
             if (argument == null) {
-                if (!silentLogs) {
-                    CommandAPI.getInstance().ifPresent(api -> api.getPlugin().getLogger().severe("Failed to find argument '" + key + "'"));
-                }
-
                 return Optional.empty();
             }
 
             final ParsedArgument<S, ?> parsed = object.get(key);
             if (parsed == null) {
-                if (!silentLogs) {
-                    CommandAPI.getInstance().ifPresent(api -> api.getPlugin().getLogger().severe("Couldn't find the registered argument '" + key + "'"));
-                }
-
                 return Optional.empty();
             }
 
@@ -145,10 +132,6 @@ public final class CommandContext<S extends CommandSender> {
             final Argument<Object, Object> converter = argument.getArgument().get();
             return Optional.ofNullable(type.cast(converter.convert(stack.getSource(), result)));
         } catch (final Exception e) {
-            if (!silentLogs) {
-                CommandAPI.getInstance().ifPresent(api -> api.getPlugin().getLogger().log(Level.SEVERE, "Failed to parse argument '" + key + "'", e));
-            }
-
             return Optional.empty();
         }
     }

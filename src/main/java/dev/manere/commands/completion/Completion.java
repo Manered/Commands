@@ -6,6 +6,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public final class Completion {
     private final String text;
     private final Component tooltip;
@@ -84,5 +86,10 @@ public final class Completion {
         return tooltip != null
             ? "Completion[text = " + text + ", tooltip = " + PlainTextComponentSerializer.plainText().serialize(getTooltip()) + "]"
             : "Completion[text = " + text + ", tooltip = " + null + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(text);
     }
 }

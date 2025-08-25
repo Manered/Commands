@@ -6,7 +6,7 @@ import dev.manere.commands.argument.Argument;
 import org.jetbrains.annotations.NotNull;
 
 public class FloatArgument implements Argument<Float, Float> {
-    private float minimum = Float.MIN_VALUE;
+    private float minimum = -Float.MAX_VALUE;
     private float maximum = Float.MAX_VALUE;
 
     public FloatArgument(final float minimum, final float maximum) {
@@ -22,8 +22,8 @@ public class FloatArgument implements Argument<Float, Float> {
 
     @Override
     public @NotNull ArgumentType<Float> getNativeType() {
-        if (minimum == Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return FloatArgumentType.floatArg();
-        if (minimum != Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return FloatArgumentType.floatArg(minimum);
+        if (minimum == -Float.MAX_VALUE && maximum == Float.MAX_VALUE) return FloatArgumentType.floatArg();
+        if (minimum != -Float.MAX_VALUE && maximum == Float.MAX_VALUE) return FloatArgumentType.floatArg(minimum);
         return FloatArgumentType.floatArg(minimum, maximum);
     }
 }

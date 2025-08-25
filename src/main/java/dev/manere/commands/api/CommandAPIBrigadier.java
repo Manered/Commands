@@ -10,10 +10,12 @@ import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.manere.commands.CommandContext;
 import dev.manere.commands.CommandNode;
+import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.CommandArgument;
 import dev.manere.commands.argument.SingleCommandArgument;
 import dev.manere.commands.completion.AsyncCompletionProvider;
 import dev.manere.commands.completion.CompletionProvider;
+import dev.manere.commands.completion.EmptyCompletionProvider;
 import dev.manere.commands.completion.SyncCompletionProvider;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
@@ -88,9 +90,10 @@ public final class CommandAPIBrigadier {
                 final CommandArgument argument = arguments.get(i);
                 if (argument instanceof SingleCommandArgument<?> sca) {
                     final String key = sca.getKey();
-                    final ArgumentType<?> type = sca.getArgument().get().getNativeType();
+                    final Argument<?, ?> argumentParser = sca.getArgument().get();
+                    final ArgumentType<?> nativeType = argumentParser.getNativeType();
 
-                    final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, type);
+                    final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, nativeType);
 
                     if (!argument.isRequired() || getLastRequiredArgumentIndex(arguments) == i) {
                         argumentBuilder.executes(cmd -> {
@@ -116,6 +119,12 @@ public final class CommandAPIBrigadier {
 
                     if (argument.getCompletions().isPresent()) {
                         argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, argument.getCompletions().get(), context, suggestionsBuilder));
+                    } else {
+                        if (argumentParser.getDefaultCompletions() instanceof EmptyCompletionProvider) {
+                            argumentBuilder.suggests(nativeType::listSuggestions);
+                        } else {
+                            argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, argumentParser.getDefaultCompletions(), context, suggestionsBuilder));
+                        }
                     }
 
                     ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
@@ -160,25 +169,29 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stackCtx,
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) {
-        if (customCompletions instanceof AsyncCompletionProvider asyncCompletionProvider) {
-            return asyncCompletionProvider.completes(buildContext(node, stackCtx))
-                .thenApply(completions -> {
-                    completions.forEach(completion -> suggestionsBuilder.suggest(
+        switch (customCompletions) {
+            case AsyncCompletionProvider asyncCompletionProvider -> {
+                return asyncCompletionProvider.completes(buildContext(node, stackCtx))
+                    .thenApply(completions -> {
+                        completions.forEach(completion -> suggestionsBuilder.suggest(
+                            completion.getText(),
+                            MessageComponentSerializer.message().serialize(completion.getTooltip())
+                        ));
+                        return suggestionsBuilder.build();
+                    });
+            }
+            case SyncCompletionProvider syncCompletionProvider -> {
+                syncCompletionProvider.completes(buildContext(node, stackCtx))
+                    .forEach(completion -> suggestionsBuilder.suggest(
                         completion.getText(),
                         MessageComponentSerializer.message().serialize(completion.getTooltip())
                     ));
-                    return suggestionsBuilder.build();
-                });
-        } else if (customCompletions instanceof SyncCompletionProvider syncCompletionProvider) {
-            syncCompletionProvider.completes(buildContext(node, stackCtx))
-                .forEach(completion -> suggestionsBuilder.suggest(
-                    completion.getText(),
-                    MessageComponentSerializer.message().serialize(completion.getTooltip())
-                ));
 
-            return suggestionsBuilder.buildFuture();
-        } else {
-            return Suggestions.empty();
+                return suggestionsBuilder.buildFuture();
+            }
+            default -> {
+                return Suggestions.empty();
+            }
         }
     }
 }
