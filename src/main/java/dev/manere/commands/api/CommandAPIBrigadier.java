@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -66,7 +65,10 @@ public final class CommandAPIBrigadier {
 
                 final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
 
-                final Optional<Consumer<CommandContext<? extends CommandSender>>> consumerFound = Optional.ofNullable(executors.get(cmdSenderType));
+                final var consumerFound = executors.entrySet().stream()
+                    .filter(e -> e.getKey().isAssignableFrom(cmdSenderType))
+                    .map(Map.Entry::getValue)
+                    .findFirst();
 
                 consumerFound.ifPresentOrElse(
                     commandContextConsumer -> commandContextConsumer.accept(buildContext(node, cmd)),
@@ -98,7 +100,10 @@ public final class CommandAPIBrigadier {
 
                             final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
 
-                            final Optional<Consumer<CommandContext<? extends CommandSender>>> consumerFound = Optional.ofNullable(executors.get(cmdSenderType));
+                            final var consumerFound = executors.entrySet().stream()
+                                .filter(e -> e.getKey().isAssignableFrom(cmdSenderType))
+                                .map(Map.Entry::getValue)
+                                .findFirst();
 
                             consumerFound.ifPresentOrElse(
                                 commandContextConsumer -> commandContextConsumer.accept(buildContext(node, cmd)),
