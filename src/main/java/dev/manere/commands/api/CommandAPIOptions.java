@@ -13,7 +13,7 @@ public final class CommandAPIOptions {
     public static final Set<CommandAPIOption<?>> REGISTRY = new HashSet<>();
 
     @NotNull
-    public static final CommandAPIOption<Boolean> SILENT_LOGS = register("silent_logs", false);
+    public static final CommandAPIOption<Boolean> SILENT_LOGS = register("silent_logs", true);
 
     @NotNull
     @ApiStatus.Internal

@@ -293,7 +293,6 @@ public final class CommandNode {
         return Objects.equals(this.literal, other.literal) && Objects.equals(this.parent, other.parent);
     }
 
-
     @Override
     public String toString() {
         return this.getClass().getSimpleName()

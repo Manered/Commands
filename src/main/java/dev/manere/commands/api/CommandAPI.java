@@ -85,7 +85,7 @@ public final class CommandAPI {
 
     @SuppressWarnings("UnstableApiUsage")
     public void register(final @NotNull CommandNode root) {
-        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(false);
+        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(true);
 
         getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
             final Commands commands = event.registrar();
@@ -111,7 +111,7 @@ public final class CommandAPI {
 
     @SuppressWarnings("UnstableApiUsage")
     public void unregister(final @NotNull String label) {
-        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(false);
+        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(true);
 
         getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
             final Commands commands = event.registrar();
