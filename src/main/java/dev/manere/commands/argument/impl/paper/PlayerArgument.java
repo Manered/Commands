@@ -1,8 +1,11 @@
 package dev.manere.commands.argument.impl.paper;
 
+import com.mojang.brigadier.Message;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.completion.Completion;
 import dev.manere.commands.completion.CompletionProvider;
@@ -21,15 +24,11 @@ public class PlayerArgument implements Argument<Player, String> {
     @Override
     public Player convert(final @NotNull CommandSourceStack stack, final @NotNull String nativeValue) throws CommandSyntaxException {
         if (nativeValue == null || nativeValue.isBlank()) {
-            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
-                .dispatcherParseException()
-                .create("Player not found");
+            throw new SimpleCommandExceptionType(() -> "Player not found").create();
         }
 
         final Player player = Bukkit.getPlayer(nativeValue);
-        if (player == null) throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
-            .dispatcherParseException()
-            .create("Player '" + nativeValue + "' not found");
+        if (player == null) throw new SimpleCommandExceptionType(() -> "Player '" + nativeValue + "' not found").create();
 
         return player;
     }

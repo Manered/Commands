@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import dev.manere.commands.argument.Argument;
@@ -57,8 +58,7 @@ public class CustomEnumArgument<E extends Enum<E>> implements Argument<E, E> {
                 try {
                     return Enum.valueOf(enumClass, input.toUpperCase());
                 } catch (final IllegalArgumentException e) {
-                    throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException()
-                        .create("Invalid value: " + input);
+                    throw new SimpleCommandExceptionType(() -> "Invalid value: " + input).create();
                 }
             }
         };

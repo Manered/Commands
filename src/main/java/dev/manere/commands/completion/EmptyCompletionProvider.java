@@ -1,3 +1,5 @@
 package dev.manere.commands.completion;
 
-public interface EmptyCompletionProvider extends SyncCompletionProvider {}
+import java.util.Collection;
+
+public interface EmptyCompletionProvider extends CompletionProvider<Collection<Completion>> {}

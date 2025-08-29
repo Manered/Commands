@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public final class Completion {
     private final String text;
@@ -62,8 +63,8 @@ public final class Completion {
     }
 
     @NotNull
-    public Component getTooltip() {
-        return tooltip != null ? tooltip : Component.empty();
+    public Optional<Component> getTooltip() {
+        return Optional.ofNullable(tooltip);
     }
 
     @NotNull
@@ -73,7 +74,7 @@ public final class Completion {
 
     @NotNull
     public Completion withText(final @NotNull String text) {
-        return Completion.completion(text, getTooltip());
+        return Completion.completion(text, getTooltip().orElse(null));
     }
 
     @Override
@@ -84,7 +85,7 @@ public final class Completion {
     @Override
     public String toString() {
         return tooltip != null
-            ? "Completion[text = " + text + ", tooltip = " + PlainTextComponentSerializer.plainText().serialize(getTooltip()) + "]"
+            ? "Completion[text = " + text + ", tooltip = " + PlainTextComponentSerializer.plainText().serialize(getTooltip().orElse(Component.empty())) + "]"
             : "Completion[text = " + text + ", tooltip = " + null + "]";
     }
 

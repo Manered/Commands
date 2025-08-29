@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
@@ -70,14 +71,12 @@ public final class CommandAPIBrigadier {
                 if (argument.isRequired()) {
                     final Optional<ArgumentResult> result = context.findArgumentResult(argument.getKey());
                     if (result.isEmpty() || result.get().result().isEmpty()) {
-                        throw CommandSyntaxException.BUILT_IN_EXCEPTIONS
-                            .dispatcherParseException()
-                            .create("Missing required argument: " + argument.getKey());
+                        throw new SimpleCommandExceptionType(() -> "Missing required argument: " + argument.getKey()).create();
                     }
                 }
             }
         } catch (final Exception e) {
-            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().create(e.getMessage());
+            throw new SimpleCommandExceptionType(e::getMessage).create();
         }
 
         return context;
@@ -211,22 +210,34 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stackCtx,
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
+        final String remaining = suggestionsBuilder.getRemaining().toLowerCase();
+
         switch (customCompletions) {
             case AsyncCompletionProvider asyncCompletionProvider -> {
                 return asyncCompletionProvider.completes(buildContext(node, stackCtx))
                     .thenApply(completions -> {
-                        completions.forEach(completion -> suggestionsBuilder.suggest(
-                            completion.getText(),
-                            MessageComponentSerializer.message().serialize(completion.getTooltip())
-                        ));
+                        completions.stream()
+                            .filter(completion -> completion.getText().toLowerCase().startsWith(remaining))
+                            .forEach(completion -> completion.getTooltip().ifPresentOrElse(
+                                tooltip -> suggestionsBuilder.suggest(
+                                    completion.getText(),
+                                    MessageComponentSerializer.message().serialize(tooltip)
+                                ),
+                                () -> suggestionsBuilder.suggest(completion.getText())
+                            ));
+
                         return suggestionsBuilder.build();
                     });
             }
             case SyncCompletionProvider syncCompletionProvider -> {
-                syncCompletionProvider.completes(buildContext(node, stackCtx))
-                    .forEach(completion -> suggestionsBuilder.suggest(
-                        completion.getText(),
-                        MessageComponentSerializer.message().serialize(completion.getTooltip())
+                syncCompletionProvider.completes(buildContext(node, stackCtx)).stream()
+                    .filter(completion -> completion.getText().toLowerCase().startsWith(remaining))
+                    .forEach(completion -> completion.getTooltip().ifPresentOrElse(
+                        tooltip -> suggestionsBuilder.suggest(
+                            completion.getText(),
+                            MessageComponentSerializer.message().serialize(tooltip)
+                        ),
+                        () -> suggestionsBuilder.suggest(completion.getText())
                     ));
 
                 return suggestionsBuilder.buildFuture();
@@ -236,4 +247,5 @@ public final class CommandAPIBrigadier {
             }
         }
     }
+
 }
