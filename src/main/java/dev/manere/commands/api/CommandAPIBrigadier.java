@@ -56,8 +56,13 @@ public final class CommandAPIBrigadier {
                 final String key = entry.getKey();
                 final Object result = entry.getValue().getResult();
 
-                context.getCommandArgument(key).ifPresent(argument -> context.registerArgumentResult(
-                    ArgumentResult.result(key, Optional.ofNullable(result), argument)
+                final var singleCommandArgument = context.getCommandArgument(key).orElse(null);
+                if (singleCommandArgument == null) continue;
+
+                context.registerArgumentResult(ArgumentResult.result(
+                    key,
+                    Optional.ofNullable(singleCommandArgument.getArgument().get().convert(stack.getSource(), result)),
+                    singleCommandArgument
                 ));
             }
 

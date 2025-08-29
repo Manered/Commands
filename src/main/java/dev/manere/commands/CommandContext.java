@@ -93,10 +93,10 @@ public final class CommandContext<S extends CommandSender> {
 
     @NotNull
     @ApiStatus.Internal
-    public Optional<SingleCommandArgument<? extends Argument<?, ?>>> getCommandArgument(final @NotNull String key) {
+    public Optional<SingleCommandArgument<? extends Argument<Object, Object>>> getCommandArgument(final @NotNull String key) {
         for (final CommandArgument argument : node.arguments()) {
             if (argument instanceof SingleCommandArgument<?> single) {
-                if (single.getKey().equals(key)) return Optional.of(single);
+                if (single.getKey().equals(key)) return Optional.of((SingleCommandArgument<? extends Argument<Object, Object>>) single);
             }
         }
 
