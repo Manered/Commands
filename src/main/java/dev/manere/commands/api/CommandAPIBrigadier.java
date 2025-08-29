@@ -210,14 +210,16 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stackCtx,
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        final String remaining = suggestionsBuilder.getRemaining().toLowerCase();
+        final String input = stackCtx.getInput();
+        final String[] parts = input.trim().split("\\s+");
+        final String lastArg = (parts.length > 0 ? parts[parts.length - 1] : "").toLowerCase();
 
         switch (customCompletions) {
             case AsyncCompletionProvider asyncCompletionProvider -> {
                 return asyncCompletionProvider.completes(buildContext(node, stackCtx))
                     .thenApply(completions -> {
                         completions.stream()
-                            .filter(completion -> completion.getText().toLowerCase().startsWith(remaining))
+                            .filter(c -> c.getText().toLowerCase().startsWith(lastArg))
                             .forEach(completion -> completion.getTooltip().ifPresentOrElse(
                                 tooltip -> suggestionsBuilder.suggest(
                                     completion.getText(),
@@ -231,7 +233,7 @@ public final class CommandAPIBrigadier {
             }
             case SyncCompletionProvider syncCompletionProvider -> {
                 syncCompletionProvider.completes(buildContext(node, stackCtx)).stream()
-                    .filter(completion -> completion.getText().toLowerCase().startsWith(remaining))
+                    .filter(c -> c.getText().toLowerCase().startsWith(lastArg))
                     .forEach(completion -> completion.getTooltip().ifPresentOrElse(
                         tooltip -> suggestionsBuilder.suggest(
                             completion.getText(),
