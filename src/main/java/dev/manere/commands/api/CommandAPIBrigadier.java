@@ -27,6 +27,7 @@ import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -202,7 +203,7 @@ public final class CommandAPIBrigadier {
         return -1;
     }
 
-    @NotNull
+    @Nullable
     @ApiStatus.Internal
     private static CompletableFuture<Suggestions> convert(
         final CommandNode node,
@@ -211,8 +212,8 @@ public final class CommandAPIBrigadier {
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
         final String input = stackCtx.getInput();
-        final String[] parts = input.trim().split("\\s+");
-        final String lastArg = (parts.length > 0 ? parts[parts.length - 1] : "").toLowerCase();
+        final String[] parts = input.split("\\s+");
+        final String lastArg = (parts.length > 0 ? parts[parts.length - 1] : "");
 
         switch (customCompletions) {
             case AsyncCompletionProvider asyncCompletionProvider -> {
@@ -245,7 +246,7 @@ public final class CommandAPIBrigadier {
                 return suggestionsBuilder.buildFuture();
             }
             default -> {
-                return Suggestions.empty();
+                return null;
             }
         }
     }
