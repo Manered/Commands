@@ -159,14 +159,19 @@ public final class CommandAPIBrigadier {
                         });
                     }
 
+                    CompletionProvider<?> completionProvider = null;
+
                     if (argument.getCompletions().isPresent()) {
-                        argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, argument.getCompletions().get(), context, suggestionsBuilder));
+                        completionProvider = argument.getCompletions().get();
                     } else {
-                        if (argumentParser.getDefaultCompletions() instanceof EmptyCompletionProvider) {
-                            argumentBuilder.suggests(nativeType::listSuggestions);
-                        } else {
-                            argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, argumentParser.getDefaultCompletions(), context, suggestionsBuilder));
+                        if (!(argumentParser.getDefaultCompletions() instanceof EmptyCompletionProvider)) {
+                            completionProvider = argumentParser.getDefaultCompletions();
                         }
+                    }
+
+                    if (!(completionProvider instanceof EmptyCompletionProvider) && completionProvider != null) {
+                        final CompletionProvider<?> finalCompletionProvider = completionProvider;
+                        argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, finalCompletionProvider, context, suggestionsBuilder));
                     }
 
                     ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
@@ -211,9 +216,8 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stackCtx,
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        final String input = stackCtx.getInput();
-        final String[] parts = input.split("\\s+");
-        final String lastArg = (parts.length > 0 ? parts[parts.length - 1] : "");
+        final int cursor = suggestionsBuilder.getStart();
+        final String lastArg = stackCtx.getInput().substring(cursor).toLowerCase();
 
         switch (customCompletions) {
             case AsyncCompletionProvider asyncCompletionProvider -> {
