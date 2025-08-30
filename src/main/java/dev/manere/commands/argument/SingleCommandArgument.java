@@ -22,7 +22,10 @@ public final class SingleCommandArgument<A extends Argument<?, ?>> implements Co
     public SingleCommandArgument(final @NotNull Supplier<A> argument, final @NotNull String key, final @Nullable CompletionProvider<?> completions, final boolean required) {
         this.argument = argument;
         this.key = key;
-        this.completions = completions;
+
+        if (completions != null) this.completions = completions;
+        else this.completions = argument.get().getDefaultCompletions();
+
         this.required = required;
     }
 

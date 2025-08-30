@@ -159,19 +159,10 @@ public final class CommandAPIBrigadier {
                         });
                     }
 
-                    CompletionProvider<?> completionProvider = null;
-
-                    if (argument.getCompletions().isPresent()) {
-                        completionProvider = argument.getCompletions().get();
-                    } else {
-                        if (!(argumentParser.getDefaultCompletions() instanceof EmptyCompletionProvider)) {
-                            completionProvider = argumentParser.getDefaultCompletions();
-                        }
-                    }
+                    final CompletionProvider<?> completionProvider = argument.getCompletions().orElse(null);
 
                     if (!(completionProvider instanceof EmptyCompletionProvider) && completionProvider != null) {
-                        final CompletionProvider<?> finalCompletionProvider = completionProvider;
-                        argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, finalCompletionProvider, context, suggestionsBuilder));
+                        argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, completionProvider, context, suggestionsBuilder));
                     }
 
                     ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
