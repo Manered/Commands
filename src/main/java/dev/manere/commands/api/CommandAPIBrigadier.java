@@ -16,7 +16,6 @@ import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.ArgumentResult;
 import dev.manere.commands.argument.CommandArgument;
-import dev.manere.commands.argument.SingleCommandArgument;
 import dev.manere.commands.completion.AsyncCompletionProvider;
 import dev.manere.commands.completion.CompletionProvider;
 import dev.manere.commands.completion.EmptyCompletionProvider;
@@ -63,12 +62,12 @@ public final class CommandAPIBrigadier {
 
                 context.registerArgumentResult(ArgumentResult.result(
                     key,
-                    Optional.ofNullable(singleCommandArgument.getArgument().get().convert(stack.getSource(), result)),
+                    singleCommandArgument.getArgument().get().convert(stack.getSource(), result),
                     singleCommandArgument
                 ));
             }
 
-            for (final CommandArgument argument : node.arguments()) {
+            for (final CommandArgument<?> argument : node.arguments()) {
                 if (argument.isRequired()) {
                     final Optional<ArgumentResult> result = context.findArgumentResult(argument.getKey());
                     if (result.isEmpty() || result.get().result().isEmpty()) {
@@ -107,74 +106,81 @@ public final class CommandAPIBrigadier {
 
                 final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
 
-                final var consumerFound = executors.entrySet().stream()
-                    .filter(e -> e.getKey().isAssignableFrom(cmdSenderType))
-                    .map(Map.Entry::getValue)
-                    .findFirst();
+                final var consumerFound = findExecutor(executors, cmdSenderType);
 
                 if (consumerFound.isPresent()) {
                     consumerFound.get().accept(buildContext(node, cmd));
                 } else {
-                    executors.getOrDefault(CommandSender.class, commandContext -> {}).accept(buildContext(node, cmd));
+                    executors.getOrDefault(CommandSender.class, commandContext -> {
+                    }).accept(buildContext(node, cmd));
                 }
 
                 return Command.SINGLE_SUCCESS;
             });
         }
 
-        final List<? extends CommandArgument> arguments = node.arguments();
+        final List<? extends CommandArgument<?>> arguments = node.arguments();
         if (!arguments.isEmpty()) {
             ArgumentCommandNode<CommandSourceStack, ?> firstNode = null;
             ArgumentCommandNode<CommandSourceStack, ?> previousNode = null;
 
             for (int i = 0; i < arguments.size(); i++) {
-                final CommandArgument argument = arguments.get(i);
-                if (argument instanceof SingleCommandArgument<?> sca) {
-                    final String key = sca.getKey();
-                    final Argument<?, ?> argumentParser = sca.getArgument().get();
-                    final ArgumentType<?> nativeType = argumentParser.getNativeType();
+                final CommandArgument<?> argument = arguments.get(i);
 
-                    final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, nativeType);
+                final String key = argument.getKey();
+                final Argument<?, ?> argumentParser = argument.getArgument().get();
+                final ArgumentType<?> nativeType = argumentParser.getNativeType();
 
-                    if (!argument.isRequired() || getLastRequiredArgumentIndex(arguments) == i) {
-                        argumentBuilder.executes(cmd -> {
-                            final CommandSender cmdSender = cmd.getSource().getSender();
+                final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, nativeType);
 
-                            final Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors = node.executors();
+                final CompletionProvider<?> completionProvider = argument.getCompletions().orElse(null);
 
-                            final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
-
-                            final var consumerFound = executors.entrySet().stream()
-                                .filter(e -> e.getKey().isAssignableFrom(cmdSenderType))
-                                .map(Map.Entry::getValue)
-                                .findFirst();
-
-                            if (consumerFound.isPresent()) {
-                                consumerFound.get().accept(buildContext(node, cmd));
-                            } else {
-                                executors.getOrDefault(CommandSender.class, commandContext -> {}).accept(buildContext(node, cmd));
-                            }
-
-                            return Command.SINGLE_SUCCESS;
-                        });
-                    }
-
-                    final CompletionProvider<?> completionProvider = argument.getCompletions().orElse(null);
-
-                    if (!(completionProvider instanceof EmptyCompletionProvider) && completionProvider != null) {
-                        argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, completionProvider, context, suggestionsBuilder));
-                    }
-
-                    ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
-
-                    if (previousNode == null) {
-                        firstNode = currentNode;
-                    } else {
-                        previousNode.addChild(currentNode);
-                    }
-
-                    previousNode = currentNode;
+                if (!(completionProvider instanceof EmptyCompletionProvider) && completionProvider != null) {
+                    argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, completionProvider, context, suggestionsBuilder));
                 }
+
+                argumentBuilder.requires(commandSourceStack -> {
+                    final CommandSender sender = commandSourceStack.getSender();
+
+                    final List<Predicate<CommandSender>> filters = node.filters();
+
+                    for (final Predicate<CommandSender> commandContextPredicate : filters) {
+                        if (commandContextPredicate.test(sender)) return false;
+                    }
+
+                    return true;
+                });
+
+                if (!argument.isRequired() || getLastRequiredArgumentIndex(arguments) == i) {
+                    argumentBuilder.executes(cmd -> {
+                        final CommandSender cmdSender = cmd.getSource().getSender();
+
+                        final Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors = node.executors();
+
+                        final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
+
+                        final var consumerFound = findExecutor(executors, cmdSenderType);
+
+                        if (consumerFound.isPresent()) {
+                            consumerFound.get().accept(buildContext(node, cmd));
+                        } else {
+                            executors.getOrDefault(CommandSender.class, commandContext -> {
+                            }).accept(buildContext(node, cmd));
+                        }
+
+                        return Command.SINGLE_SUCCESS;
+                    });
+                }
+
+                ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
+
+                if (previousNode == null) {
+                    firstNode = currentNode;
+                } else {
+                    previousNode.addChild(currentNode);
+                }
+
+                previousNode = currentNode;
             }
 
             if (firstNode != null) {
@@ -189,7 +195,15 @@ public final class CommandAPIBrigadier {
         return builder.build();
     }
 
-    private static int getLastRequiredArgumentIndex(final @NotNull List<? extends CommandArgument> arguments) {
+    @NotNull
+    private static Optional<Consumer<CommandContext<? extends CommandSender>>> findExecutor(final @NotNull Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors, final @NotNull Class<? extends CommandSender> cmdSenderType) {
+        return executors.entrySet().stream()
+            .filter(e -> e.getKey().isAssignableFrom(cmdSenderType))
+            .map(Map.Entry::getValue)
+            .findFirst();
+    }
+
+    private static int getLastRequiredArgumentIndex(final @NotNull List<? extends CommandArgument<?>> arguments) {
         for (int i = arguments.size() - 1; i >= 0; i--) {
             if (arguments.get(i).isRequired()) {
                 return i;
@@ -207,8 +221,7 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stackCtx,
         final @NotNull SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        final int cursor = suggestionsBuilder.getStart();
-        final String lastArg = stackCtx.getInput().substring(cursor).toLowerCase();
+        final String lastArg = suggestionsBuilder.getRemainingLowerCase();
 
         switch (customCompletions) {
             case AsyncCompletionProvider asyncCompletionProvider -> {
@@ -241,7 +254,7 @@ public final class CommandAPIBrigadier {
                 return suggestionsBuilder.buildFuture();
             }
             default -> {
-                return null;
+                return suggestionsBuilder.buildFuture();
             }
         }
     }

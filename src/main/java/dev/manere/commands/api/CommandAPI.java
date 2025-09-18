@@ -2,7 +2,6 @@ package dev.manere.commands.api;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import com.mojang.brigadier.tree.RootCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
@@ -41,23 +40,23 @@ public final class CommandAPI {
 
     @NotNull
     @CanIgnoreReturnValue
-    public static CommandAPI init(final @NotNull JavaPlugin plugin, final @NotNull Consumer<CommandAPIConfig> configurator) {
+    public static CommandAPI register(final @NotNull JavaPlugin plugin, final @NotNull Consumer<CommandAPIConfig> configurator) {
         final CommandAPIConfig config = new CommandAPIConfig();
         configurator.accept(config);
 
-        return init(plugin, config);
+        return register(plugin, config);
     }
 
     @NotNull
     @CanIgnoreReturnValue
-    public static CommandAPI init(final @NotNull JavaPlugin plugin, final @NotNull CommandAPIConfig config) {
+    public static CommandAPI register(final @NotNull JavaPlugin plugin, final @NotNull CommandAPIConfig config) {
         return new CommandAPI(plugin, config);
     }
 
     @NotNull
     @CanIgnoreReturnValue
-    public static CommandAPI init(final @NotNull JavaPlugin plugin) {
-        return init(plugin, config -> {});
+    public static CommandAPI register(final @NotNull JavaPlugin plugin) {
+        return register(plugin, config -> {});
     }
 
     @NotNull
@@ -189,7 +188,7 @@ public final class CommandAPI {
 
         basicNode.configure(node);
 
-        for (final CommandArgument argument : basicNode.getArguments()) node.argument(argument);
+        for (final CommandArgument<?> argument : basicNode.getArguments()) node.argument(argument);
         for (final Object child : basicNode.getChildren()) {
             if (child instanceof BasicCommandNode basicChild) {
                 node.subcommand(convert(basicChild));

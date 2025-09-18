@@ -1,66 +1,184 @@
 package dev.manere.commands.argument;
 
-import com.mojang.brigadier.arguments.ArgumentType;
 import dev.manere.commands.completion.CompletionProvider;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
+import org.bukkit.command.CommandSender;
+import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-@SuppressWarnings("UnstableApiUsage")
-public interface CommandArgument {
+public final class CommandArgument<A extends Argument<?, ?>> {
     @NotNull
-    default Optional<CompletionProvider<?>> getCompletions() {
-        return Optional.empty();
-    }
-
-    default boolean isRequired() {
-        return true;
-    }
+    private final Supplier<A> argument;
 
     @NotNull
-    String getKey();
+    private final String key;
+
+    @Nullable
+    private final CompletionProvider<?> completions;
+
+    private final boolean required;
+
+    @Nullable
+    private final String permission;
 
     @NotNull
-    static <V, N> Argument<V, N> buildType(final @NotNull ArgumentType<N> nativeArgumentType) {
-        return () -> nativeArgumentType;
-    }
+    private final List<Predicate<CommandSender>> filters;
 
-    @NotNull
-    static <V, N> Argument<V, N> buildType(final @NotNull ArgumentType<N> nativeArgumentType, final @NotNull BiFunction<CommandSourceStack, N, V> converter) {
-        return new Argument<>() {
-            @Override
-            public @NotNull ArgumentType<N> getNativeType() {
-                return nativeArgumentType;
-            }
+    private CommandArgument(final @NotNull Supplier<A> argument, final @NotNull String key, final @Nullable CompletionProvider<?> completions, final boolean required, final @Nullable String permission, final @NotNull List<Predicate<CommandSender>> filters) {
+        this.argument = argument;
+        this.key = key;
 
-            @Override
-            public @Nullable V convert(final @NotNull CommandSourceStack stack, final @NotNull N nativeValue) {
-                return converter.apply(stack, nativeValue);
-            }
-        };
+        this.completions = completions != null ? completions : argument.get().getDefaultCompletions();
+
+        this.required = required;
+        this.permission = permission;
+
+        this.filters = filters;
+        this.filters.add(sender -> permission().isPresent() && !sender.hasPermission(permission().get()));
     }
 
     @NotNull
-    static <A extends Argument<?, ?>> SingleCommandArgument<A> required(final @NotNull Supplier<A> argument, final @NotNull String key) {
-        return new SingleCommandArgument<>(argument, key, null, true);
+    public static <A extends Argument<?, ?>> CommandArgument.Builder<A> required(final @NotNull Supplier<A> argument, final @NotNull String key) {
+        return new Builder<>(argument, key, true);
     }
 
     @NotNull
-    static <A extends Argument<?, ?>> SingleCommandArgument<A> required(final @NotNull Supplier<A> argument, final @NotNull String key, final @NotNull CompletionProvider<?> completions) {
-        return new SingleCommandArgument<>(argument, key, completions, true);
+    public static <A extends Argument<?, ?>> CommandArgument.Builder<A> required(final @NotNull String key, final @NotNull Supplier<A> argument) {
+        return required(argument, key);
     }
 
     @NotNull
-    static <A extends Argument<?, ?>> SingleCommandArgument<A> optional(final @NotNull Supplier<A> argument, final @NotNull String key) {
-        return new SingleCommandArgument<>(argument, key, null, false);
+    public static <A extends Argument<?, ?>> CommandArgument.Builder<A> optional(final @NotNull Supplier<A> argument, final @NotNull String key) {
+        return new Builder<>(argument, key, false);
     }
 
     @NotNull
-    static <A extends Argument<?, ?>> SingleCommandArgument<A> optional(final @NotNull Supplier<A> argument, final @NotNull String key, final @NotNull CompletionProvider<?> completions) {
-        return new SingleCommandArgument<>(argument, key, completions, false);
+    public static <A extends Argument<?, ?>> CommandArgument.Builder<A> optional(final @NotNull String key, final @NotNull Supplier<A> argument) {
+        return optional(argument, key);
+    }
+
+    @NotNull
+    public Supplier<A> getArgument() {
+        return argument;
+    }
+
+    @NotNull
+    public String getKey() {
+        return key;
+    }
+
+    @NotNull
+    public Optional<CompletionProvider<?>> getCompletions() {
+        return Optional.ofNullable(completions);
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
+    public boolean isOptional() {
+        return !isRequired();
+    }
+
+    @NotNull
+    public Optional<String> permission() {
+        return Optional.ofNullable(permission);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<Predicate<CommandSender>> filters() {
+        return List.copyOf(filters);
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<Predicate<CommandSender>> requirements() {
+        return filters();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof CommandArgument<?> other && other.getKey().equals(this.getKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getKey());
+    }
+
+    @Override
+    public String toString() {
+        return "CommandArgument[key = " + getKey() + ", required = " + required + "]";
+    }
+
+    public static final class Builder<A extends Argument<?, ?>> {
+        @NotNull
+        private final Supplier<A> argument;
+
+        @NotNull
+        private final String key;
+
+        @Nullable
+        private CompletionProvider<?> completions = null;
+
+        private final boolean required;
+
+        @Nullable
+        private String permission = null;
+
+        @NotNull
+        private final List<Predicate<CommandSender>> filters;
+
+        private Builder(final @NotNull Supplier<A> argument, final @NotNull String key, final boolean required) {
+            this.argument = argument;
+            this.key = key;
+
+            this.required = required;
+
+            this.filters = new ArrayList<>();
+            this.filters.add(sender -> permission != null && !sender.hasPermission(permission));
+        }
+
+        @NotNull
+        public Builder<A> completions(final @Nullable CompletionProvider<?> completions) {
+            this.completions = completions;
+            return this;
+        }
+
+        @NotNull
+        public Builder<A> permission(final @Nullable String permission) {
+            this.permission = permission;
+            return this;
+        }
+
+        @NotNull
+        public Builder<A> permission(final @Nullable Permission permission) {
+            return permission == null ? permission((String) null) : permission(permission.getName());
+        }
+
+        @NotNull
+        public Builder<A> filter(final @NotNull Predicate<CommandSender> filter) {
+            this.filters.add(filter);
+            return this;
+        }
+
+        @NotNull
+        public Builder<A> requires(final @NotNull Predicate<CommandSender> requires) {
+            return filter(requires);
+        }
+
+        @NotNull
+        public CommandArgument<A> build() {
+            return new CommandArgument<>(argument, key, completions, required, permission, filters);
+        }
     }
 }

@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Commands.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Commands.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CommandsAPI.Commands.main.iml" filepath="$PROJECT_DIR$/.idea/modules/CommandsAPI.Commands.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/dev.manere.Commands.main.iml" filepath="$PROJECT_DIR$/.idea/modules/dev.manere.Commands.main.iml" />
     </modules>
   </component>

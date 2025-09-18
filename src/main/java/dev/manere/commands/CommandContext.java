@@ -4,7 +4,6 @@ import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.ArgumentResult;
 import dev.manere.commands.argument.CommandArgument;
-import dev.manere.commands.argument.SingleCommandArgument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -93,10 +92,10 @@ public final class CommandContext<S extends CommandSender> {
 
     @NotNull
     @ApiStatus.Internal
-    public Optional<SingleCommandArgument<? extends Argument<Object, Object>>> getCommandArgument(final @NotNull String key) {
-        for (final CommandArgument argument : node.arguments()) {
-            if (argument instanceof SingleCommandArgument<?> single) {
-                if (single.getKey().equals(key)) return Optional.of((SingleCommandArgument<? extends Argument<Object, Object>>) single);
+    public Optional<CommandArgument<? extends Argument<Object, Object>>> getCommandArgument(final @NotNull String key) {
+        for (final CommandArgument<?> argument : node.arguments()) {
+            if (argument instanceof CommandArgument<?> single) {
+                if (single.getKey().equals(key)) return Optional.of((CommandArgument<? extends Argument<Object, Object>>) single);
             }
         }
 

@@ -5,6 +5,7 @@ import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public final class CommandNode {
     private final List<Predicate<CommandSender>> filters;
 
     @NotNull
-    private final List<CommandArgument> arguments = new LinkedList<>();
+    private final List<CommandArgument<?>> arguments = new LinkedList<>();
 
     @NotNull
     private final List<CommandNode> children = new ArrayList<>();
@@ -101,6 +102,12 @@ public final class CommandNode {
     }
 
     @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode permission(final @Nullable Permission permission) {
+        return permission == null ? permission((String) null) : permission(permission.getName());
+    }
+
+    @NotNull
     @Unmodifiable
     public Set<String> aliases() {
         return Set.copyOf(aliases);
@@ -147,15 +154,21 @@ public final class CommandNode {
 
     @NotNull
     @Unmodifiable
-    public List<? extends CommandArgument> arguments() {
+    public List<? extends CommandArgument<?>> arguments() {
         return List.copyOf(arguments);
     }
 
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode argument(final @NotNull CommandArgument argument) {
+    public CommandNode argument(final @NotNull CommandArgument<?> argument) {
         this.arguments.add(argument);
         return this;
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode argument(final @NotNull CommandArgument.Builder<?> argument) {
+        return argument(argument.build());
     }
 
     @NotNull
@@ -176,29 +189,6 @@ public final class CommandNode {
         this.children.add(child);
         return this;
     }
-
-    @NotNull
-    @CanIgnoreReturnValue
-    public CommandNode copy(final @NotNull String sourceLiteral) {
-        final CommandNode parent = parent().orElse(root()); 
-        final CommandNode source = parent.subcommands().stream()
-            .filter(node -> node.literal().equals(sourceLiteral))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Source command not found: " + sourceLiteral));
-
-        final CommandNode copy = new CommandNode(source.literal)
-            .permission(source.permission)
-            .aliases(source.aliases)
-            .description(source.description);
-
-        source.filters.forEach(copy::filter);
-        source.arguments.forEach(copy::argument);
-        source.executors.forEach((unused, action) -> copy.executes(CommandSender.class, (sender, ctx) -> action.accept(ctx)));
-        source.children.forEach(child -> copy.subcommand(child.copy(child.literal)));
-
-        return copy;
-    }
-
 
     @NotNull
     @CanIgnoreReturnValue

@@ -26,7 +26,7 @@ public interface BasicCommandNode {
 
     @NotNull
     @Unmodifiable
-    default Collection<? extends CommandArgument> getArguments() {
+    default Collection<? extends CommandArgument<?>> getArguments() {
         return List.of();
     }
 
