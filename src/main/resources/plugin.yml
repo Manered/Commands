@@ -1,6 +1,0 @@
-name: Commands
-version: 1.0.0
-main: dev.manere.commands.ExamplePlugin
-description: An example plugin
-author: manereisbad
-api-version: '1.21.4'

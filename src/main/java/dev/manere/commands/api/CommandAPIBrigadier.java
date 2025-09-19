@@ -23,6 +23,7 @@ import dev.manere.commands.completion.SyncCompletionProvider;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.MessageComponentSerializer;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -121,8 +122,8 @@ public final class CommandAPIBrigadier {
 
         final List<? extends CommandArgument<?>> arguments = node.arguments();
         if (!arguments.isEmpty()) {
-            ArgumentCommandNode<CommandSourceStack, ?> firstNode = null;
-            ArgumentCommandNode<CommandSourceStack, ?> previousNode = null;
+            RequiredArgumentBuilder<CommandSourceStack, ?> rootArgumentBuilder = null;
+            RequiredArgumentBuilder<CommandSourceStack, ?> previousBuilder = null;
 
             for (int i = 0; i < arguments.size(); i++) {
                 final CommandArgument<?> argument = arguments.get(i);
@@ -131,21 +132,19 @@ public final class CommandAPIBrigadier {
                 final Argument<?, ?> argumentParser = argument.getArgument().get();
                 final ArgumentType<?> nativeType = argumentParser.getNativeType();
 
-                final RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, nativeType);
+                RequiredArgumentBuilder<CommandSourceStack, ?> argumentBuilder = Commands.argument(key, nativeType);
 
                 final CompletionProvider<?> completionProvider = argument.getCompletions().orElse(null);
 
-                if (!(completionProvider instanceof EmptyCompletionProvider) && completionProvider != null) {
+                if (completionProvider != null && !completionProvider.isEmpty()) {
                     argumentBuilder.suggests((context, suggestionsBuilder) -> convert(node, completionProvider, context, suggestionsBuilder));
                 }
 
                 argumentBuilder.requires(commandSourceStack -> {
                     final CommandSender sender = commandSourceStack.getSender();
 
-                    final List<Predicate<CommandSender>> filters = node.filters();
-
-                    for (final Predicate<CommandSender> commandContextPredicate : filters) {
-                        if (commandContextPredicate.test(sender)) return false;
+                    for (final Predicate<CommandSender> filter : node.filters()) {
+                        if (filter.test(sender)) return false;
                     }
 
                     return true;
@@ -154,38 +153,29 @@ public final class CommandAPIBrigadier {
                 if (!argument.isRequired() || getLastRequiredArgumentIndex(arguments) == i) {
                     argumentBuilder.executes(cmd -> {
                         final CommandSender cmdSender = cmd.getSource().getSender();
-
                         final Map<Class<? extends CommandSender>, Consumer<CommandContext<? extends CommandSender>>> executors = node.executors();
-
-                        final Class<? extends CommandSender> cmdSenderType = cmdSender.getClass();
-
-                        final var consumerFound = findExecutor(executors, cmdSenderType);
+                        final var consumerFound = findExecutor(executors, cmdSender.getClass());
 
                         if (consumerFound.isPresent()) {
                             consumerFound.get().accept(buildContext(node, cmd));
                         } else {
-                            executors.getOrDefault(CommandSender.class, commandContext -> {
-                            }).accept(buildContext(node, cmd));
+                            executors.getOrDefault(CommandSender.class, c -> {}).accept(buildContext(node, cmd));
                         }
 
                         return Command.SINGLE_SUCCESS;
                     });
                 }
 
-                ArgumentCommandNode<CommandSourceStack, ?> currentNode = argumentBuilder.build();
-
-                if (previousNode == null) {
-                    firstNode = currentNode;
+                if (previousBuilder != null) {
+                    previousBuilder.then(argumentBuilder);
                 } else {
-                    previousNode.addChild(currentNode);
+                    rootArgumentBuilder = argumentBuilder;
                 }
 
-                previousNode = currentNode;
+                previousBuilder = argumentBuilder;
             }
 
-            if (firstNode != null) {
-                builder.then(firstNode);
-            }
+            builder.then(rootArgumentBuilder);
         }
 
         for (final CommandNode child : node.children()) {
