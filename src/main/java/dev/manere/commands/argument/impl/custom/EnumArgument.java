@@ -5,30 +5,37 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.completion.Completion;
-import dev.manere.commands.completion.CompletionProvider;
+import dev.manere.commands.completion.Suggestions;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("UnstableApiUsage")
-public class CustomEnumArgument<E extends Enum<E>> implements Argument<E, E> {
+public class EnumArgument<E extends Enum<E>> implements Argument<E, E> {
     private final Class<E> enumClass;
 
-    public CustomEnumArgument(final @NotNull Class<E> enumClass) {
+    public EnumArgument(final @NotNull Class<E> enumClass) {
         this.enumClass = enumClass;
+    }
+
+    @Nullable
+    @Override
+    public E convert(@NotNull CommandSourceStack stack, @NotNull E nativeValue) throws CommandSyntaxException {
+        return nativeValue;
     }
 
     @NotNull
     @Override
     public ArgumentType<E> getNativeType() {
-        return new CustomArgumentType.Converted<E, String>() {
+        return new CustomArgumentType.Converted<@NotNull E, @NotNull String>() {
             @NotNull
             @Override
             public ArgumentType<String> getNativeType() {
@@ -37,7 +44,7 @@ public class CustomEnumArgument<E extends Enum<E>> implements Argument<E, E> {
 
             @NotNull
             @Override
-            public <S> CompletableFuture<Suggestions> listSuggestions(final @NotNull CommandContext<S> context, final @NotNull SuggestionsBuilder builder) {
+            public <S> CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> listSuggestions(final @NotNull CommandContext<S> context, final @NotNull SuggestionsBuilder builder) {
                 final String input = builder.getRemaining().toLowerCase();
 
                 for (final E e : enumClass.getEnumConstants()) {
@@ -66,8 +73,8 @@ public class CustomEnumArgument<E extends Enum<E>> implements Argument<E, E> {
 
     @NotNull
     @Override
-    public CompletionProvider<?> getDefaultCompletions() {
-        return CompletionProvider.sync(context -> {
+    public Suggestions<?> getDefaultCompletions() {
+        return Suggestions.suggest(context -> {
             final List<Completion> completions = new ArrayList<>();
 
             for (final E e : enumClass.getEnumConstants()) {

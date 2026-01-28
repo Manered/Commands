@@ -3,6 +3,7 @@ package dev.manere.commands.argument.impl.vanilla;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import dev.manere.commands.argument.Argument;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
 public class FloatArgument implements Argument<Float, Float> {
@@ -19,6 +20,11 @@ public class FloatArgument implements Argument<Float, Float> {
     }
 
     public FloatArgument() {}
+
+    @Override
+    public Float convert(@NotNull CommandSourceStack stack, @NotNull Float nativeValue) {
+        return nativeValue;
+    }
 
     @Override
     public @NotNull ArgumentType<Float> getNativeType() {

@@ -4,6 +4,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,28 +61,8 @@ public final class CommandNode {
     }
 
     @NotNull
-    public static CommandNode literal(final @NotNull String literal) {
-        return node(literal);
-    }
-
-    @NotNull
-    public static CommandNode of(final @NotNull String literal) {
-        return literal(literal);
-    }
-
-    @NotNull
     public static CommandNode node(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
-        return of(literal).executes(executor);
-    }
-
-    @NotNull
-    public static CommandNode literal(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
-        return node(literal, executor);
-    }
-
-    @NotNull
-    public static CommandNode of(final @NotNull String literal, final @NotNull Consumer<CommandContext<CommandSender>> executor) {
-        return literal(literal, executor);
+        return node(literal).executes(executor);
     }
 
     @NotNull
@@ -216,6 +197,12 @@ public final class CommandNode {
 
     @NotNull
     @CanIgnoreReturnValue
+    public CommandNode executes(final @NotNull BiConsumer<CommandSender, CommandContext<CommandSender>> executor) {
+        return executes(CommandSender.class, executor);
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
     @SuppressWarnings("unchecked")
     public <S extends CommandSender> CommandNode executes(final @NotNull Class<S> senderType, final @NotNull Consumer<CommandContext<S>> executor) {
         this.executors.put(senderType, ctx -> executor.accept((CommandContext<S>) ctx));
@@ -238,6 +225,18 @@ public final class CommandNode {
     @CanIgnoreReturnValue
     public CommandNode executesPlayer(final @NotNull Consumer<CommandContext<Player>> executor) {
         return executes(Player.class, executor);
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode executesConsole(final @NotNull BiConsumer<ConsoleCommandSender, CommandContext<ConsoleCommandSender>> executor) {
+        return executes(ConsoleCommandSender.class, executor);
+    }
+
+    @NotNull
+    @CanIgnoreReturnValue
+    public CommandNode executesConsole(final @NotNull Consumer<CommandContext<ConsoleCommandSender>> executor) {
+        return executes(ConsoleCommandSender.class, executor);
     }
 
     @NotNull

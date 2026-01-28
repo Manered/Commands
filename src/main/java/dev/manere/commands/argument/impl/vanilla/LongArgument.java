@@ -3,12 +3,8 @@ package dev.manere.commands.argument.impl.vanilla;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import dev.manere.commands.argument.Argument;
-import dev.manere.commands.completion.Completion;
-import dev.manere.commands.completion.CompletionProvider;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class LongArgument implements Argument<Long, Long> {
     private long minimum = -Long.MAX_VALUE;
@@ -24,6 +20,11 @@ public class LongArgument implements Argument<Long, Long> {
     }
 
     public LongArgument() {}
+
+    @Override
+    public Long convert(@NotNull CommandSourceStack stack, @NotNull Long nativeValue) {
+        return nativeValue;
+    }
 
     @Override
     public @NotNull ArgumentType<Long> getNativeType() {

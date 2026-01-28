@@ -3,12 +3,8 @@ package dev.manere.commands.argument.impl.vanilla;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.manere.commands.argument.Argument;
-import dev.manere.commands.completion.Completion;
-import dev.manere.commands.completion.CompletionProvider;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class IntegerArgument implements Argument<Integer, Integer> {
     private int minimum = -Integer.MAX_VALUE;
@@ -24,6 +20,11 @@ public class IntegerArgument implements Argument<Integer, Integer> {
     }
 
     public IntegerArgument() {}
+
+    @Override
+    public Integer convert(@NotNull CommandSourceStack stack, @NotNull Integer nativeValue) {
+        return nativeValue;
+    }
 
     @Override
     public @NotNull ArgumentType<Integer> getNativeType() {

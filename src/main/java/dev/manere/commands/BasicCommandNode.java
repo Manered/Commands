@@ -10,42 +10,39 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface BasicCommandNode {
+public abstract class BasicCommandNode {
     @NotNull
-    String getLiteral();
+    public abstract String getLiteral();
 
     @NotNull
-    default Optional<String> getPermission() {
+    public Optional<String> getPermission() {
         return Optional.empty();
     }
 
     @NotNull
-    default Collection<String> getAliases() {
+    public Collection<String> getAliases() {
         return List.of();
     }
 
     @NotNull
-    @Unmodifiable
-    default Collection<? extends CommandArgument<?>> getArguments() {
+    public Collection<? extends CommandArgument<?>> getArguments() {
         return List.of();
     }
 
     @NotNull
-    @Unmodifiable
-    default Collection<?> getChildren() {
+    public Collection<?> getChildren() {
         return List.of();
     }
 
-    // If you want to set the description, add any filters, etc.
-    default void configure(final @NotNull CommandNode node) {}
+    public void configure(final @NotNull CommandNode node) {}
 
-    void execute(final @NotNull CommandContext<? extends CommandSender> context);
+    public abstract void execute(final @NotNull CommandContext<? extends CommandSender> context);
 
-    default void register() {
+    public final void register() {
         CommandAPI.getInstance().ifPresent(this::register);
     }
 
-    default void register(final @NotNull CommandAPI api) {
+    public final void register(final @NotNull CommandAPI api) {
         api.register(this);
     }
 }

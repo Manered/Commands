@@ -8,12 +8,11 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.BlockPositionResolver;
 import io.papermc.paper.math.BlockPosition;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
 public class BlockPositionArgument implements Argument<BlockPosition, BlockPositionResolver> {
     @Override
-    public @Nullable BlockPosition convert(@NotNull CommandSourceStack stack, @NotNull BlockPositionResolver nativeValue) throws CommandSyntaxException {
+    public @NotNull BlockPosition convert(@NotNull CommandSourceStack stack, @NotNull BlockPositionResolver nativeValue) throws CommandSyntaxException {
         return nativeValue.resolve(stack);
     }
 

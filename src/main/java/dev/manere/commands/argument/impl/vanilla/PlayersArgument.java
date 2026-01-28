@@ -9,17 +9,20 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSele
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.List;
+
 @SuppressWarnings("UnstableApiUsage")
-public class PlayerArgument implements Argument<Player, PlayerSelectorArgumentResolver> {
+public class PlayersArgument implements Argument<List<Player>, PlayerSelectorArgumentResolver> {
     @NotNull
     @Override
-    public Player convert(@NotNull CommandSourceStack stack, @NotNull PlayerSelectorArgumentResolver nativeValue) throws CommandSyntaxException {
-        return nativeValue.resolve(stack).getFirst();
+    public List<Player> convert(@NotNull CommandSourceStack stack, @NotNull PlayerSelectorArgumentResolver nativeValue) throws CommandSyntaxException {
+        return nativeValue.resolve(stack);
     }
 
     @NotNull
     @Override
     public ArgumentType<PlayerSelectorArgumentResolver> getNativeType() {
-        return ArgumentTypes.player();
+        return ArgumentTypes.players();
     }
 }

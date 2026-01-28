@@ -5,6 +5,12 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
+import dev.manere.commands.argument.impl.vanilla.PlayerArgument;
+import dev.manere.commands.argument.impl.vanilla.StringArgument;
+import dev.manere.commands.argument.impl.vanilla.TextArgument;
+import dev.manere.commands.argument.impl.vanilla.WordArgument;
+import dev.manere.commands.completion.Completion;
+import dev.manere.commands.completion.Suggestions;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -182,7 +188,7 @@ public final class CommandAPI {
     @NotNull
     @ApiStatus.Internal
     private CommandNode convert(final @NotNull BasicCommandNode basicNode) {
-        final CommandNode node = CommandNode.of(basicNode.getLiteral(), basicNode::execute)
+        final CommandNode node = CommandNode.node(basicNode.getLiteral(), basicNode::execute)
             .permission(basicNode.getPermission().orElse(null))
             .aliases(basicNode.getAliases());
 

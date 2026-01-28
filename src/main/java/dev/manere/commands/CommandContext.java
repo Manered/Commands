@@ -5,17 +5,20 @@ import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.ArgumentResult;
 import dev.manere.commands.argument.CommandArgument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.audience.ForwardingAudience;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class CommandContext<S extends CommandSender> {
+public final class CommandContext<S extends CommandSender> implements ForwardingAudience {
     private final S source;
     private final CommandNode node;
 
@@ -49,8 +52,7 @@ public final class CommandContext<S extends CommandSender> {
     @NotNull
     public <T> Optional<T> getOptionalArgument(final @NotNull Class<T> type, final @NotNull String key) {
         if (getCommandArgument(key).isEmpty()) {
-            CommandAPI.getInstance().ifPresent(commandAPI -> commandAPI.getPlugin().getLogger().severe("Argument '" + key + "' not found."));
-            return Optional.empty();
+            throw new IllegalArgumentException("Argument '" + key + "' is not defined in the command node.");
         }
 
         final ArgumentResult argumentResult = arguments.get(key);
@@ -73,10 +75,6 @@ public final class CommandContext<S extends CommandSender> {
 
     @NotNull
     public <T> T getRequiredArgument(final @NotNull Class<T> type, final @NotNull String key) {
-        if (getCommandArgument(key).isEmpty()) {
-            throw new NullPointerException("Argument '" + key + "' not found.");
-        }
-
         final ArgumentResult argumentResult = arguments.get(key);
         if (argumentResult == null) {
             throw new NullPointerException("Argument '" + key + "' not found.");
@@ -132,5 +130,15 @@ public final class CommandContext<S extends CommandSender> {
     @ApiStatus.Internal
     public com.mojang.brigadier.context.CommandContext<CommandSourceStack> getStack() {
         return stack;
+    }
+
+    public void sendRichMessage(final @NotNull String message) {
+        getSource().sendRichMessage(message);
+    }
+
+    @NotNull
+    @Override
+    public Iterable<? extends Audience> audiences() {
+        return Collections.singleton(getSource());
     }
 }

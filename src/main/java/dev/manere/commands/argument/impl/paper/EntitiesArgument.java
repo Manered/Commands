@@ -9,15 +9,17 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySele
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @SuppressWarnings("UnstableApiUsage")
-public class EntityArgument implements Argument<Entity, EntitySelectorArgumentResolver> {
+public class EntitiesArgument implements Argument<List<Entity>, EntitySelectorArgumentResolver> {
     @Override
-    public @NotNull Entity convert(@NotNull CommandSourceStack stack, @NotNull EntitySelectorArgumentResolver nativeValue) throws CommandSyntaxException {
-        return nativeValue.resolve(stack).get(0);
+    public @NotNull List<Entity> convert(@NotNull CommandSourceStack stack, @NotNull EntitySelectorArgumentResolver nativeValue) throws CommandSyntaxException {
+        return nativeValue.resolve(stack);
     }
 
     @Override
     public @NotNull ArgumentType<EntitySelectorArgumentResolver> getNativeType() {
-        return ArgumentTypes.entity();
+        return ArgumentTypes.entities();
     }
 }

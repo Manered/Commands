@@ -9,11 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public final class EmptyCompletionProvider implements CompletionProvider<Collection<Completion>> {
+public final class EmptySuggestions implements Suggestions<Collection<Completion>> {
     @NotNull
     @Override
     @Unmodifiable
-    public Collection<Completion> completes(final @NotNull CommandContext<? extends CommandSender> context) {
+    public Collection<Completion> suggests(final @NotNull CommandContext<? extends CommandSender> context) {
         return Collections.emptyList();
     }
 
@@ -24,7 +24,7 @@ public final class EmptyCompletionProvider implements CompletionProvider<Collect
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof EmptyCompletionProvider other && other.toString().equals(toString());
+        return obj instanceof EmptySuggestions other && other.toString().equals(toString());
     }
 
     @Override
