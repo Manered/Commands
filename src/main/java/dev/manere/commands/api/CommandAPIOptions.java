@@ -16,6 +16,9 @@ public final class CommandAPIOptions {
     public static final CommandAPIOption<Boolean> SILENT_LOGS = register("silent_logs", true);
 
     @NotNull
+    public static final CommandAPIOption<Boolean> DEBUG_TREE = register("debug_tree", false);
+
+    @NotNull
     @ApiStatus.Internal
     public static <V> CommandAPIOption<V> register(final @NotNull String key, final @Nullable V defaultValue) {
         final CommandAPIOption<V> option = new CommandAPIOption<>(key, defaultValue);

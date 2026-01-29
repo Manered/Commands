@@ -14,13 +14,13 @@ public final class CommandAPIConfig {
 
     @NotNull
     @CanIgnoreReturnValue
-    public <V> CommandAPIConfig set(final @NotNull CommandAPIOption<V> option, final @Nullable V value) {
+    public <V> CommandAPIConfig setOption(final @NotNull CommandAPIOption<V> option, final @Nullable V value) {
         this.options.put(option, value);
         return this;
     }
 
     @NotNull
-    public <V> Optional<V> get(final @NotNull CommandAPIOption<V> option) {
+    public <V> Optional<V> getOption(final @NotNull CommandAPIOption<V> option) {
         final Optional<V> defaultValue = option.getDefaultValue();
 
         try {

@@ -5,12 +5,6 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.manere.commands.BasicCommandNode;
 import dev.manere.commands.CommandNode;
 import dev.manere.commands.argument.CommandArgument;
-import dev.manere.commands.argument.impl.vanilla.PlayerArgument;
-import dev.manere.commands.argument.impl.vanilla.StringArgument;
-import dev.manere.commands.argument.impl.vanilla.TextArgument;
-import dev.manere.commands.argument.impl.vanilla.WordArgument;
-import dev.manere.commands.completion.Completion;
-import dev.manere.commands.completion.Suggestions;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -90,7 +84,7 @@ public final class CommandAPI {
 
     @SuppressWarnings("UnstableApiUsage")
     public void register(final @NotNull CommandNode root) {
-        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(true);
+        final boolean silentLogs = config.getOption(CommandAPIOptions.SILENT_LOGS).orElse(true);
 
         getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
             final Commands commands = event.registrar();
@@ -98,6 +92,12 @@ public final class CommandAPI {
             final LiteralCommandNode<CommandSourceStack> converted = CommandAPIBrigadier.convert(root);
 
             commands.register(converted, root.description().orElse(null), root.aliases());
+
+            // DEBUG: print brigadier tree
+            if (config.getOption(CommandAPIOptions.DEBUG_TREE).orElse(false)) {
+                CommandTreeDebugger.printTree(converted, line -> this.plugin.getLogger().info(line));
+            }
+
             if (!silentLogs) plugin.getLogger().info("Registered command " + root.literal() + ".");
 
             for (final Player player : Bukkit.getOnlinePlayers()) {
@@ -116,7 +116,7 @@ public final class CommandAPI {
 
     @SuppressWarnings("UnstableApiUsage")
     public void unregister(final @NotNull String label) {
-        final boolean silentLogs = config.get(CommandAPIOptions.SILENT_LOGS).orElse(true);
+        final boolean silentLogs = config.getOption(CommandAPIOptions.SILENT_LOGS).orElse(true);
 
         getPlugin().getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS.newHandler(event -> {
             final Commands commands = event.registrar();

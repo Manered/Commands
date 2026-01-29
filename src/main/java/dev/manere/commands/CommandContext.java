@@ -1,6 +1,5 @@
 package dev.manere.commands;
 
-import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.Argument;
 import dev.manere.commands.argument.ArgumentResult;
 import dev.manere.commands.argument.CommandArgument;
