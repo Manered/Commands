@@ -29,7 +29,7 @@ public final class CommandNode {
     private final Set<String> aliases = new HashSet<>();
 
     @NotNull
-    private final List<Predicate<CommandSender>> filters;
+    private final List<Predicate<CommandSender>> requirements;
 
     @NotNull
     private final List<CommandArgument<?>> arguments = new LinkedList<>();
@@ -48,10 +48,10 @@ public final class CommandNode {
 
     public CommandNode(final @NotNull String literal) {
         this.literal = literal;
-        this.filters = new ArrayList<>();
-        this.filters.add(sender -> {
+        this.requirements = new ArrayList<>();
+        this.requirements.add(sender -> {
             final String permission = permission().orElse(null);
-            return permission != null && !sender.hasPermission(permission);
+            return permission == null || sender.hasPermission(permission);
         });
     }
 
@@ -72,7 +72,8 @@ public final class CommandNode {
 
     @NotNull
     public Optional<String> permission() {
-        return permission == null ? parent != null ? Optional.ofNullable(parent.permission) : Optional.empty() : Optional.of(permission);
+        if (permission != null) return Optional.of(permission);
+        return parent != null ? parent.permission() : Optional.empty();
     }
 
     @NotNull
@@ -110,27 +111,27 @@ public final class CommandNode {
 
     @NotNull
     @Unmodifiable
-    public List<Predicate<CommandSender>> filters() {
-        return List.copyOf(filters);
+    public List<Predicate<CommandSender>> requirements() {
+        return List.copyOf(requirements);
     }
 
     @NotNull
     @Unmodifiable
-    public List<Predicate<CommandSender>> requirements() {
-        return filters();
+    public List<Predicate<CommandSender>> filters() {
+        return requirements();
     }
 
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode filter(final @NotNull Predicate<CommandSender> filter) {
-        this.filters.add(filter);
+    public CommandNode requires(final @NotNull Predicate<CommandSender> requirement) {
+        this.requirements.add(requirement);
         return this;
     }
 
     @NotNull
     @CanIgnoreReturnValue
-    public CommandNode requires(final @NotNull Predicate<CommandSender> requires) {
-        return filter(requires);
+    public CommandNode filter(final @NotNull Predicate<CommandSender> filter) {
+        return requires(filter);
     }
 
     @NotNull
@@ -167,6 +168,7 @@ public final class CommandNode {
     @NotNull
     @CanIgnoreReturnValue
     public CommandNode subcommand(final @NotNull CommandNode child) {
+        child.parent(this);
         this.children.add(child);
         return this;
     }
@@ -289,7 +291,7 @@ public final class CommandNode {
             + "literal = " + literal
             + ", permission = " + permission
             + ", aliases = " + aliases
-            + ", filters.size = " + filters.size()
+            + ", requirements.size = " + requirements.size()
             + ", arguments = " + arguments
             + ", children = " + children
             + ", executors.size = " + executors.size()

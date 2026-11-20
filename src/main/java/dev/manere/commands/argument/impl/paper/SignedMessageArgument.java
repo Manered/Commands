@@ -8,7 +8,6 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.SignedMessageResolver;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnstableApiUsage")
 public class SignedMessageArgument implements Argument<SignedMessageResolver, SignedMessageResolver> {
     @Override
     public @NotNull SignedMessageResolver convert(@NotNull CommandSourceStack stack, @NotNull SignedMessageResolver nativeValue) throws CommandSyntaxException {

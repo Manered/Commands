@@ -2,6 +2,7 @@ package dev.manere.commands.argument.impl.vanilla;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import dev.manere.commands.argument.Argument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -14,7 +15,11 @@ public class PlayerArgument implements Argument<Player, PlayerSelectorArgumentRe
     @NotNull
     @Override
     public Player convert(@NotNull CommandSourceStack stack, @NotNull PlayerSelectorArgumentResolver nativeValue) throws CommandSyntaxException {
-        return nativeValue.resolve(stack).getFirst();
+        final var players = nativeValue.resolve(stack);
+        if (players.isEmpty()) {
+            throw new SimpleCommandExceptionType(() -> "No player was found.").create();
+        }
+        return players.getFirst();
     }
 
     @NotNull

@@ -21,6 +21,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,12 +31,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-@SuppressWarnings({"UnstableApiUsage", "unchecked"})
+@SuppressWarnings("unchecked")
 public final class CommandAPIBrigadier {
 
-    /* ------------------------------------------------------------ */
-    /* Context building                                              */
-    /* ------------------------------------------------------------ */
+    private static final java.lang.reflect.Field ARGUMENTS_FIELD;
+    static {
+        try {
+            ARGUMENTS_FIELD = com.mojang.brigadier.context.CommandContext.class.getDeclaredField("arguments");
+            ARGUMENTS_FIELD.setAccessible(true);
+        } catch (final NoSuchFieldException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     @NotNull
     public static <S extends CommandSender> CommandContext<S> buildContext(
@@ -61,18 +68,27 @@ public final class CommandAPIBrigadier {
                 if (!getArguments(stack).containsKey(key)) continue;
 
                 final Argument<Object, Object> parser =
-                    (Argument<Object, Object>) argument.getArgument().get();
+                    (Argument<Object, Object>) argument.argumentInstance();
 
-                final Object nativeValue = stack.getArgument(key, Object.class);
-                final Object value = parser.convert(stack.getSource(), nativeValue);
+                try {
+                    final Object nativeValue = stack.getArgument(key, Object.class);
+                    final Object value = parser.convert(stack.getSource(), nativeValue);
 
-                context.registerArgumentResult(
-                    ArgumentResult.result(
-                        key,
-                        value,
-                        (CommandArgument<? extends Argument<Object, Object>>) argument
-                    )
-                );
+                    context.registerArgumentResult(
+                        ArgumentResult.result(
+                            key,
+                            value,
+                            (CommandArgument<? extends Argument<Object, Object>>) argument
+                        )
+                    );
+                } catch (final Exception e) {
+                    if (strict) {
+                        if (e instanceof CommandSyntaxException syntaxException) {
+                            throw syntaxException;
+                        }
+                        throw new SimpleCommandExceptionType(() -> "Invalid argument " + key + ": " + e.getMessage()).create();
+                    }
+                }
             }
         }
 
@@ -90,13 +106,12 @@ public final class CommandAPIBrigadier {
 
                     if (result.isEmpty() || result.get().result().isEmpty()) {
                         throw new SimpleCommandExceptionType(
-                            () -> "Missing required argument: " + argument.getKey()
+                            () -> "Invalid command usage: Argument " + argument.getKey() + " can not be empty."
                         ).create();
                     }
                 }
             }
         }
-
 
         return context;
     }
@@ -106,17 +121,11 @@ public final class CommandAPIBrigadier {
         final @NotNull com.mojang.brigadier.context.CommandContext<CommandSourceStack> stack
     ) {
         try {
-            final var field = stack.getClass().getDeclaredField("arguments");
-            field.setAccessible(true);
-            return (Map<String, com.mojang.brigadier.context.ParsedArgument<CommandSourceStack, ?>>) field.get(stack);
+            return (Map<String, com.mojang.brigadier.context.ParsedArgument<CommandSourceStack, ?>>) ARGUMENTS_FIELD.get(stack);
         } catch (final ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
     }
-
-    /* ------------------------------------------------------------ */
-    /* Conversion                                                    */
-    /* ------------------------------------------------------------ */
 
     @NotNull
     public static LiteralCommandNode<CommandSourceStack> convert(
@@ -131,20 +140,14 @@ public final class CommandAPIBrigadier {
     ) {
         final LiteralArgumentBuilder<CommandSourceStack> builder =
             Commands.literal(node.literal())
-                .requires(stack -> checkRequirements(node, stack));
+                .requires(stack -> checkRequirements(node, ancestors, stack));
 
-        // 1. Build argument execution paths
         buildArguments(builder, node.arguments(), node, ancestors);
 
-        // 2. Attach subcommands ONCE (not per argument)
         attachChildren(builder, node.children(), node, ancestors);
 
         return builder.build();
     }
-
-    /* ------------------------------------------------------------ */
-    /* Argument building (NO subcommands here)                       */
-    /* ------------------------------------------------------------ */
 
     private static void buildArguments(
         final ArgumentBuilder<CommandSourceStack, ?> parent,
@@ -154,7 +157,10 @@ public final class CommandAPIBrigadier {
     ) {
         if (arguments.isEmpty()) {
             if (!node.executors().isEmpty()) {
-                parent.executes(cmd -> execute(node, ancestors, cmd));
+                parent.executes(cmd -> {
+                    execute(node, ancestors, cmd);
+                    return Command.SINGLE_SUCCESS;
+                });
             }
             return;
         }
@@ -170,13 +176,14 @@ public final class CommandAPIBrigadier {
         parent.then(argBuilder);
 
         if (head.isOptional()) {
-            buildArguments(parent, tail, node, ancestors);
+            if (!node.executors().isEmpty()) {
+                parent.executes(cmd -> {
+                    execute(node, ancestors, cmd);
+                    return Command.SINGLE_SUCCESS;
+                });
+            }
         }
     }
-
-    /* ------------------------------------------------------------ */
-    /* Subcommand attachment                                         */
-    /* ------------------------------------------------------------ */
 
     private static void attachChildren(
         final ArgumentBuilder<CommandSourceStack, ?> parent,
@@ -196,17 +203,14 @@ public final class CommandAPIBrigadier {
             for (final String alias : child.aliases()) {
                 final LiteralArgumentBuilder<CommandSourceStack> aliasBuilder =
                     Commands.literal(alias)
-                        .requires(stack -> checkRequirements(child, stack));
+                        .requires(stack -> checkRequirements(child, childAncestors, stack));
 
+                buildArguments(aliasBuilder, child.arguments(), child, childAncestors);
                 attachChildren(aliasBuilder, child.children(), child, childAncestors);
                 parent.then(aliasBuilder);
             }
         }
     }
-
-    /* ------------------------------------------------------------ */
-    /* Argument builder                                              */
-    /* ------------------------------------------------------------ */
 
     private static RequiredArgumentBuilder<CommandSourceStack, ?> createArgumentBuilder(
         final CommandNode node,
@@ -214,7 +218,7 @@ public final class CommandAPIBrigadier {
         final List<CommandNode> ancestors
     ) {
         final String key = argument.getKey();
-        final Argument<?, ?> parser = argument.getArgument().get();
+        final Argument<?, ?> parser = argument.argumentInstance();
         final ArgumentType<?> nativeType = parser.getNativeType();
 
         final RequiredArgumentBuilder<CommandSourceStack, ?> builder =
@@ -229,8 +233,16 @@ public final class CommandAPIBrigadier {
 
         builder.requires(stack -> {
             final CommandSender sender = stack.getSender();
-            for (final Predicate<CommandSender> filter : argument.filters()) {
-                if (filter.test(sender)) return false;
+            for (final CommandNode ancestor : ancestors) {
+                for (final Predicate<CommandSender> req : ancestor.requirements()) {
+                    if (!req.test(sender)) return false;
+                }
+            }
+            for (final Predicate<CommandSender> req : node.requirements()) {
+                if (!req.test(sender)) return false;
+            }
+            for (final Predicate<CommandSender> req : argument.requirements()) {
+                if (!req.test(sender)) return false;
             }
             return true;
         });
@@ -238,27 +250,31 @@ public final class CommandAPIBrigadier {
         return builder;
     }
 
-    /* ------------------------------------------------------------ */
-    /* Execution                                                     */
-    /* ------------------------------------------------------------ */
-
-    private static int execute(
+    private static void execute(
         final CommandNode node,
         final List<CommandNode> ancestors,
         final com.mojang.brigadier.context.CommandContext<CommandSourceStack> cmd
     ) throws CommandSyntaxException {
-
         final CommandSender sender = cmd.getSource().getSender();
         final var executors = node.executors();
 
         final CommandContext<CommandSender> context =
             buildContext(node, ancestors, cmd, true);
 
-        findExecutor(executors, sender.getClass())
-            .orElseGet(() -> executors.get(CommandSender.class))
-            .accept(context);
+        final Consumer<CommandContext<? extends CommandSender>> executor =
+            findExecutor(executors, sender.getClass())
+                .orElseGet(() -> executors.get(CommandSender.class));
 
-        return Command.SINGLE_SUCCESS;
+        if (executor == null) {
+            if (!(sender instanceof Player) && executors.containsKey(Player.class)) {
+                CommandAPI.getInstance().flatMap(api -> api.getConfig().getOption(CommandAPIOptions.PLAYER_ONLY_COMMAND_MESSAGE)).ifPresent(sender::sendMessage);
+                return;
+            }
+            CommandAPI.getInstance().flatMap(api -> api.getConfig().getOption(CommandAPIOptions.EXECUTOR_MISMATCH_MESSAGE)).ifPresent(sender::sendMessage);
+            return;
+        }
+
+        executor.accept(context);
     }
 
     private static Optional<Consumer<CommandContext<? extends CommandSender>>> findExecutor(
@@ -271,10 +287,6 @@ public final class CommandAPIBrigadier {
             .findFirst();
     }
 
-    /* ------------------------------------------------------------ */
-    /* Suggestions                                                   */
-    /* ------------------------------------------------------------ */
-
     @Nullable
     @ApiStatus.Internal
     private static CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggest(
@@ -283,34 +295,37 @@ public final class CommandAPIBrigadier {
         final Suggestions<?> provider,
         final com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx,
         final SuggestionsBuilder builder
-    ) throws CommandSyntaxException {
-
-        final CommandContext<CommandSender> context =
-            buildContext(node, ancestors, ctx, false);
+    ) {
+        final CommandContext<CommandSender> context;
+        try {
+            context = buildContext(node, ancestors, ctx, false);
+        } catch (final CommandSyntaxException e) {
+            return builder.buildFuture();
+        }
 
         final String remaining = builder.getRemainingLowerCase();
 
         if (provider instanceof AsyncSuggestions async) {
             return async.suggests(context).thenApply(list -> {
                 list.stream()
-                    .filter(c -> c.getText().toLowerCase().startsWith(remaining))
+                    .filter(c -> c.getText().toLowerCase().startsWith(remaining) || formatSuggestion(c.getText()).toLowerCase().startsWith(remaining))
                     .forEach(c ->
                         c.getTooltip().ifPresentOrElse(
-                            t -> builder.suggest(c.getText(), MessageComponentSerializer.message().serialize(t)),
-                            () -> builder.suggest(c.getText())
+                            t -> builder.suggest(formatSuggestion(c.getText()), MessageComponentSerializer.message().serialize(t)),
+                            () -> builder.suggest(formatSuggestion(c.getText()))
                         )
                     );
                 return builder.build();
-            });
+            }).exceptionally(ex -> builder.build());
         }
 
         if (provider instanceof SyncSuggestions sync) {
             sync.suggests(context).stream()
-                .filter(c -> c.getText().toLowerCase().startsWith(remaining))
+                .filter(c -> c.getText().toLowerCase().startsWith(remaining) || formatSuggestion(c.getText()).toLowerCase().startsWith(remaining))
                 .forEach(c ->
                     c.getTooltip().ifPresentOrElse(
-                        t -> builder.suggest(c.getText(), MessageComponentSerializer.message().serialize(t)),
-                        () -> builder.suggest(c.getText())
+                        t -> builder.suggest(formatSuggestion(c.getText()), MessageComponentSerializer.message().serialize(t)),
+                        () -> builder.suggest(formatSuggestion(c.getText()))
                     )
                 );
             return builder.buildFuture();
@@ -319,17 +334,26 @@ public final class CommandAPIBrigadier {
         return builder.buildFuture();
     }
 
-    /* ------------------------------------------------------------ */
-    /* Requirements                                                  */
-    /* ------------------------------------------------------------ */
+    private static String formatSuggestion(final String text) {
+        if (text.contains(" ") && !text.startsWith("\"")) {
+            return "\"" + text + "\"";
+        }
+        return text;
+    }
 
     private static boolean checkRequirements(
         final CommandNode node,
+        final List<CommandNode> ancestors,
         final CommandSourceStack stack
     ) {
         final CommandSender sender = stack.getSender();
-        for (final Predicate<CommandSender> filter : node.filters()) {
-            if (filter.test(sender)) return false;
+        for (final CommandNode ancestor : ancestors) {
+            for (final Predicate<CommandSender> req : ancestor.requirements()) {
+                if (!req.test(sender)) return false;
+            }
+        }
+        for (final Predicate<CommandSender> req : node.requirements()) {
+            if (!req.test(sender)) return false;
         }
         return true;
     }

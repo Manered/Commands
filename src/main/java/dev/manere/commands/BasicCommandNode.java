@@ -4,7 +4,6 @@ import dev.manere.commands.api.CommandAPI;
 import dev.manere.commands.argument.CommandArgument;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;

@@ -174,7 +174,7 @@ public final class CommandAPI {
             argumentsField.setAccessible(true);
 
             final var children = (Map<String, com.mojang.brigadier.tree.CommandNode<S>>) childrenField.get(parent);
-            final var literals = (Map<String, com.mojang.brigadier.tree.LiteralCommandNode<S>>) literalsField.get(parent);
+            final var literals = (Map<String, LiteralCommandNode<S>>) literalsField.get(parent);
             final var arguments = (Map<String, com.mojang.brigadier.tree.ArgumentCommandNode<S, ?>>) argumentsField.get(parent);
 
             children.remove(name);

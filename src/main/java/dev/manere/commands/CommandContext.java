@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class CommandContext<S extends CommandSender> implements ForwardingAudience {
     private final S source;
     private final CommandNode node;
@@ -50,7 +49,7 @@ public final class CommandContext<S extends CommandSender> implements Forwarding
 
     @NotNull
     public <T> Optional<T> getOptionalArgument(final @NotNull Class<T> type, final @NotNull String key) {
-        if (getCommandArgument(key).isEmpty()) {
+        if (getCommandArgument(key).isEmpty() && !arguments.containsKey(key)) {
             throw new IllegalArgumentException("Argument '" + key + "' is not defined in the command node.");
         }
 
@@ -76,12 +75,12 @@ public final class CommandContext<S extends CommandSender> implements Forwarding
     public <T> T getRequiredArgument(final @NotNull Class<T> type, final @NotNull String key) {
         final ArgumentResult argumentResult = arguments.get(key);
         if (argumentResult == null) {
-            throw new NullPointerException("Argument '" + key + "' not found.");
+            throw new IllegalArgumentException("Required argument '" + key + "' was not provided.");
         }
 
         final var result = argumentResult.result().orElse(null);
         if (result == null) {
-            throw new NullPointerException("Required argument '" + key + "' has no value.");
+            throw new IllegalArgumentException("Required argument '" + key + "' has no value.");
         }
 
         return type.cast(result);
@@ -90,10 +89,14 @@ public final class CommandContext<S extends CommandSender> implements Forwarding
     @NotNull
     @ApiStatus.Internal
     public Optional<CommandArgument<? extends Argument<Object, Object>>> getCommandArgument(final @NotNull String key) {
-        for (final CommandArgument<?> argument : node.arguments()) {
-            if (argument instanceof CommandArgument<?> single) {
-                if (single.getKey().equals(key)) return Optional.of((CommandArgument<? extends Argument<Object, Object>>) single);
+        CommandNode current = node;
+        while (current != null) {
+            for (final CommandArgument<?> argument : current.arguments()) {
+                if (argument.getKey().equals(key)) {
+                    return Optional.of((CommandArgument<? extends Argument<Object, Object>>) argument);
+                }
             }
+            current = current.parent().orElse(null);
         }
 
         return Optional.empty();

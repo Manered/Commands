@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class CommandTreeDebugger {
-    public static void printTree(final com.mojang.brigadier.tree.CommandNode<?> node, final Consumer<String> logger) {
+    public static void printTree(final CommandNode<?> node, final Consumer<String> logger) {
         logger.accept("┌─ Brigadier Command Tree");
         printNode(node, "", true, logger);
     }
 
-    private static void printNode(final com.mojang.brigadier.tree.CommandNode<?> node, final String prefix, final boolean isLast, final Consumer<String> logger) {
+    private static void printNode(final CommandNode<?> node, final String prefix, final boolean isLast, final Consumer<String> logger) {
         final String connector = isLast ? "└─ " : "├─ ";
         final String nextPrefix = prefix + (isLast ? "   " : "│  ");
 

@@ -2,6 +2,7 @@ package dev.manere.commands.argument.impl.paper;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import dev.manere.commands.argument.Argument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -13,7 +14,11 @@ import org.jetbrains.annotations.NotNull;
 public class EntityArgument implements Argument<Entity, EntitySelectorArgumentResolver> {
     @Override
     public @NotNull Entity convert(@NotNull CommandSourceStack stack, @NotNull EntitySelectorArgumentResolver nativeValue) throws CommandSyntaxException {
-        return nativeValue.resolve(stack).get(0);
+        final var entities = nativeValue.resolve(stack);
+        if (entities.isEmpty()) {
+            throw new SimpleCommandExceptionType(() -> "No entity was found.").create();
+        }
+        return entities.get(0);
     }
 
     @Override

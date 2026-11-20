@@ -7,7 +7,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
 public class IntegerArgument implements Argument<Integer, Integer> {
-    private int minimum = -Integer.MAX_VALUE;
+    private int minimum = Integer.MIN_VALUE;
     private int maximum = Integer.MAX_VALUE;
 
     public IntegerArgument(final int minimum, final int maximum) {
@@ -28,8 +28,8 @@ public class IntegerArgument implements Argument<Integer, Integer> {
 
     @Override
     public @NotNull ArgumentType<Integer> getNativeType() {
-        if (minimum == -Integer.MAX_VALUE && maximum == Integer.MAX_VALUE) return IntegerArgumentType.integer();
-        if (minimum != -Integer.MAX_VALUE && maximum == Integer.MAX_VALUE) return IntegerArgumentType.integer(minimum);
+        if (minimum == Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return IntegerArgumentType.integer();
+        if (minimum != Integer.MIN_VALUE && maximum == Integer.MAX_VALUE) return IntegerArgumentType.integer(minimum);
         return IntegerArgumentType.integer(minimum, maximum);
     }
 }

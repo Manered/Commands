@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@SuppressWarnings("UnstableApiUsage")
 public class PlayerProfileArgument implements Argument<List<PlayerProfile>, PlayerProfileListResolver> {
     @Override
     public @NotNull List<PlayerProfile> convert(@NotNull CommandSourceStack stack, @NotNull PlayerProfileListResolver nativeValue) throws CommandSyntaxException {

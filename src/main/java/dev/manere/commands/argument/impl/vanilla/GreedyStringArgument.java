@@ -6,7 +6,7 @@ import dev.manere.commands.argument.Argument;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
-public class StringArgument implements Argument<String, String> {
+public class GreedyStringArgument implements Argument<String, String> {
     @Override
     public String convert(@NotNull CommandSourceStack stack, @NotNull String nativeValue) {
         return nativeValue;
@@ -14,6 +14,6 @@ public class StringArgument implements Argument<String, String> {
 
     @Override
     public @NotNull ArgumentType<String> getNativeType() {
-        return StringArgumentType.string();
+        return StringArgumentType.greedyString();
     }
 }

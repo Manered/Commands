@@ -48,11 +48,13 @@ public class EnumArgument<E extends Enum<E>> implements Argument<E, E> {
                 final String input = builder.getRemaining().toLowerCase();
 
                 for (final E e : enumClass.getEnumConstants()) {
-                    final String name = e.name();
-                    final String lowerCase = name.toLowerCase();
+                    final String lowerCase = e.name().toLowerCase();
+                    final String kebabCase = lowerCase.replace('_', '-');
 
                     if (lowerCase.startsWith(input)) {
                         builder.suggest(lowerCase);
+                    } else if (kebabCase.startsWith(input)) {
+                        builder.suggest(kebabCase);
                     }
                 }
 
@@ -65,7 +67,11 @@ public class EnumArgument<E extends Enum<E>> implements Argument<E, E> {
                 try {
                     return Enum.valueOf(enumClass, input.toUpperCase());
                 } catch (final IllegalArgumentException e) {
-                    throw new SimpleCommandExceptionType(() -> "Invalid value: " + input).create();
+                    try {
+                        return Enum.valueOf(enumClass, input.replace('-', '_').toUpperCase());
+                    } catch (final IllegalArgumentException e2) {
+                        throw new SimpleCommandExceptionType(() -> "Invalid value: " + input).create();
+                    }
                 }
             }
         };

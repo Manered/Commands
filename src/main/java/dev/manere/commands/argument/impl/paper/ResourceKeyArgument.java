@@ -9,7 +9,6 @@ import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.TypedKey;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnstableApiUsage")
 public class ResourceKeyArgument<T> implements Argument<TypedKey<T>, TypedKey<T>> {
     private final RegistryKey<T> registryKey;
 

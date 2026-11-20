@@ -57,8 +57,8 @@ Commands is designed to be used as a library in your Paper (or compatible) plugi
 To get started, initialize `CommandAPI` in your plugin's `onEnable` method. This will be your main entry point for registering commands and configuring the API.
 
 ```java
-import dev.manere.commands.api.CommandAPI;
-import dev.manere.commands.api.CommandAPIOptions;
+import dev.manere.commands.legacy.api.CommandAPI;
+import dev.manere.commands.legacy.api.CommandAPIOptions;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MyPlugin extends JavaPlugin {
@@ -72,7 +72,7 @@ public class MyPlugin extends JavaPlugin {
 
         // Now you can register your commands.
     }
-    
+
     public CommandAPI getCommandAPI() {
         return commandAPI;
     }

@@ -15,8 +15,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class CommandArgument<A extends Argument<?, ?>> {
+
     @NotNull
-    private final Supplier<A> argument;
+    private final A argumentInstance;
 
     @NotNull
     private final String key;
@@ -30,19 +31,29 @@ public final class CommandArgument<A extends Argument<?, ?>> {
     private final String permission;
 
     @NotNull
-    private final List<Predicate<CommandSender>> filters;
+    private final List<Predicate<CommandSender>> requirements;
 
-    private CommandArgument(final @NotNull Supplier<A> argument, final @NotNull String key, final @Nullable Suggestions<?> completions, final boolean required, final @Nullable String permission, final @NotNull List<Predicate<CommandSender>> filters) {
-        this.argument = argument;
+    private CommandArgument(
+        final @NotNull Supplier<A> argument,
+        final @NotNull String key,
+        final @Nullable Suggestions<?> completions,
+        final boolean required,
+        final @Nullable String permission,
+        final @NotNull List<Predicate<CommandSender>> requirements
+    ) {
+        this.argumentInstance = Objects.requireNonNull(argument.get(), "argument instance must not be null");
         this.key = key;
 
-        this.completions = completions != null ? completions : argument.get().getDefaultCompletions();
+        this.completions = completions != null ? completions : this.argumentInstance.getDefaultCompletions();
 
         this.required = required;
         this.permission = permission;
 
-        this.filters = filters;
-        this.filters.add(sender -> permission().isPresent() && !sender.hasPermission(permission().get()));
+        this.requirements = new ArrayList<>(requirements);
+        this.requirements.add(sender -> {
+            final String perm = permission().orElse(null);
+            return perm == null || sender.hasPermission(perm);
+        });
     }
 
     @NotNull
@@ -67,7 +78,12 @@ public final class CommandArgument<A extends Argument<?, ?>> {
 
     @NotNull
     public Supplier<A> getArgument() {
-        return argument;
+        return () -> argumentInstance;
+    }
+
+    @NotNull
+    public A argumentInstance() {
+        return argumentInstance;
     }
 
     @NotNull
@@ -85,7 +101,7 @@ public final class CommandArgument<A extends Argument<?, ?>> {
     }
 
     public boolean isOptional() {
-        return !isRequired();
+        return !required;
     }
 
     @NotNull
@@ -95,14 +111,14 @@ public final class CommandArgument<A extends Argument<?, ?>> {
 
     @NotNull
     @Unmodifiable
-    public List<Predicate<CommandSender>> filters() {
-        return List.copyOf(filters);
+    public List<Predicate<CommandSender>> requirements() {
+        return List.copyOf(requirements);
     }
 
     @NotNull
     @Unmodifiable
-    public List<Predicate<CommandSender>> requirements() {
-        return filters();
+    public List<Predicate<CommandSender>> filters() {
+        return requirements();
     }
 
     @Override
@@ -136,16 +152,12 @@ public final class CommandArgument<A extends Argument<?, ?>> {
         private String permission = null;
 
         @NotNull
-        private final List<Predicate<CommandSender>> filters;
+        private final List<Predicate<CommandSender>> requirements = new ArrayList<>();
 
         private Builder(final @NotNull Supplier<A> argument, final @NotNull String key, final boolean required) {
             this.argument = argument;
             this.key = key;
-
             this.required = required;
-
-            this.filters = new ArrayList<>();
-            this.filters.add(sender -> permission != null && !sender.hasPermission(permission));
         }
 
         @NotNull
@@ -166,19 +178,19 @@ public final class CommandArgument<A extends Argument<?, ?>> {
         }
 
         @NotNull
-        public Builder<A> filter(final @NotNull Predicate<CommandSender> filter) {
-            this.filters.add(filter);
+        public Builder<A> requires(final @NotNull Predicate<CommandSender> requirement) {
+            this.requirements.add(requirement);
             return this;
         }
 
         @NotNull
-        public Builder<A> requires(final @NotNull Predicate<CommandSender> requires) {
-            return filter(requires);
+        public Builder<A> filter(final @NotNull Predicate<CommandSender> filter) {
+            return requires(filter);
         }
 
         @NotNull
         public CommandArgument<A> build() {
-            return new CommandArgument<>(argument, key, completions, required, permission, filters);
+            return new CommandArgument<>(argument, key, completions, required, permission, requirements);
         }
     }
 }
